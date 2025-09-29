@@ -1,0 +1,447 @@
+{
+  "nodes": [
+    {
+      "id": "u1",
+      "type": "Initial Query",
+      "NL": "用户原始查询: 查询2022年四川省的销售数据，选择门店和销售额字段，只保留销售额大于500的记录，将销售额转为高销量/低销量类别，并与客户表连接，按门店分组统计平均销售额和订单数量，最后取前5个门店并排名。",
+      "Table": {
+        "desc": "",
+        "data": []
+      }
+    },
+    {
+      "id": "r1",
+      "type": "Rewrite Query",
+      "NL": "改写查询: 在 sales_table 中筛选 2022 年四川省的记录，选择门店和销售额，过滤销售额>500，转换为类别标签，并与 customer_orders 表连接，按门店聚合，计算平均销售额和订单数，按平均销售额排序，取前5并排名。",
+      "Table": {
+        "desc": "",
+        "data": []
+      }
+    },
+    {
+      "id": "k1",
+      "type": "Keyword",
+      "NL": "关键词: 时间=2022年",
+      "Table": {
+        "desc": "筛选 year=2022",
+        "data": []
+      }
+    },
+    {
+      "id": "k2",
+      "type": "Keyword",
+      "NL": "关键词: 省份=四川省",
+      "Table": {
+        "desc": "筛选 province='四川省'",
+        "data": []
+      }
+    },
+    {
+      "id": "k3",
+      "type": "Keyword",
+      "NL": "关键词: 门店",
+      "Table": {
+        "desc": "选择 store，用于分组",
+        "data": []
+      }
+    },
+    {
+      "id": "k4",
+      "type": "Keyword",
+      "NL": "关键词: 销售额",
+      "Table": {
+        "desc": "选择 sales，用于聚合计算",
+        "data": []
+      }
+    },
+    {
+      "id": "k5",
+      "type": "Keyword",
+      "NL": "关键词: >500",
+      "Table": {
+        "desc": "筛选 sales > 500",
+        "data": []
+      }
+    },
+    {
+      "id": "k6",
+      "type": "Keyword",
+      "NL": "关键词: 高销量/低销量",
+      "Table": {
+        "desc": "转换 CASE WHEN sales>1000 THEN '高销量' ELSE '低销量'",
+        "data": []
+      }
+    },
+    {
+      "id": "k7",
+      "type": "Keyword",
+      "NL": "关键词: 客户表",
+      "Table": {
+        "desc": "连接 customer_orders",
+        "data": []
+      }
+    },
+    {
+      "id": "k8",
+      "type": "Keyword",
+      "NL": "关键词: 平均销售额",
+      "Table": {
+        "desc": "聚合 AVG(sales)",
+        "data": []
+      }
+    },
+    {
+      "id": "k9",
+      "type": "Keyword",
+      "NL": "关键词: 订单数量",
+      "Table": {
+        "desc": "聚合 COUNT(order_id)",
+        "data": []
+      }
+    },
+    {
+      "id": "k10",
+      "type": "Keyword",
+      "NL": "关键词: 前5",
+      "Table": {
+        "desc": "限制 LIMIT 5",
+        "data": []
+      }
+    },
+    {
+      "id": "k11",
+      "type": "Keyword",
+      "NL": "关键词: 排名",
+      "Table": {
+        "desc": "窗口计算 RANK()",
+        "data": []
+      }
+    },
+    {
+      "id": "a1",
+      "type": "Analysis Query",
+      "NL": "分析改写: 在 sales_table 中筛选 2022 年四川省数据，选择字段 store, sales，过滤 sales>500，将销售额转换为类别标签 (高销量/低销量)，与 customer_orders 连接，按 store 分组，计算 AVG(sales), COUNT(order_id)，按 AVG(sales) 排序，取前5，使用 RANK() 排序。",
+      "Table": {
+        "desc": "",
+        "data": []
+      }
+    },
+    {
+      "id": "step1",
+      "type": "Select",
+      "NL": "读取 sales_table 原始数据",
+      "Table": {
+        "desc": "sales_table",
+        "data": [
+          [
+            "date",
+            "province",
+            "store",
+            "order_id",
+            "sales"
+          ],
+          [
+            "2022-01-01",
+            "四川省",
+            "门店A",
+            "o001",
+            1200
+          ],
+          [
+            "2022-01-01",
+            "四川省",
+            "门店B",
+            "o002",
+            600
+          ],
+          [
+            "2022-01-01",
+            "云南省",
+            "门店C",
+            "o003",
+            800
+          ]
+        ]
+      }
+    },
+    {
+      "id": "step2",
+      "type": "Filter",
+      "NL": "筛选四川省 2022 年数据",
+      "Table": {
+        "desc": "WHERE province='四川省' AND YEAR(date)=2022",
+        "data": []
+      }
+    },
+    {
+      "id": "step3",
+      "type": "Select",
+      "NL": "选择字段: store, sales, order_id",
+      "Table": {
+        "desc": "SELECT store, sales, order_id",
+        "data": []
+      }
+    },
+    {
+      "id": "step4",
+      "type": "Filter",
+      "NL": "筛选销售额 > 500",
+      "Table": {
+        "desc": "WHERE sales > 500",
+        "data": []
+      }
+    },
+    {
+      "id": "step5",
+      "type": "Transform",
+      "NL": "转换: 将销售额转为高销量/低销量",
+      "Table": {
+        "desc": "CASE WHEN sales>1000 THEN '高销量' ELSE '低销量'",
+        "data": []
+      }
+    },
+    {
+      "id": "step6",
+      "type": "Join",
+      "NL": "连接 sales_table 和 customer_orders",
+      "Table": {
+        "desc": "INNER JOIN ON order_id",
+        "data": []
+      }
+    },
+    {
+      "id": "step7",
+      "type": "GroupBy",
+      "NL": "按 store, sales_level 分组，统计 avg_sales 和 order_count",
+      "Table": {
+        "desc": "GROUP BY store, sales_level",
+        "data": []
+      }
+    },
+    {
+      "id": "step8",
+      "type": "OrderBy",
+      "NL": "按 avg_sales 降序排序",
+      "Table": {
+        "desc": "ORDER BY avg_sales DESC",
+        "data": []
+      }
+    },
+    {
+      "id": "step9",
+      "type": "Limit",
+      "NL": "限制取前5个门店",
+      "Table": {
+        "desc": "LIMIT 5",
+        "data": []
+      }
+    },
+    {
+      "id": "step10",
+      "type": "Window",
+      "NL": "窗口计算: 按 avg_sales 排名",
+      "Table": {
+        "desc": "RANK() OVER (ORDER BY avg_sales DESC)",
+        "data": []
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "u1",
+      "to": "r1",
+      "operation": {
+        "type": "Rewrite"
+      }
+    },
+    {
+      "from": "r1",
+      "to": "a1",
+      "operation": {
+        "type": "Rewrite with keyword analysis"
+      }
+    },
+    {
+      "from": "r1",
+      "to": "k1",
+      "operation": {
+        "type": "Keyword",
+        "value": "2022年"
+      }
+    },
+    {
+      "from": "r1",
+      "to": "k2",
+      "operation": {
+        "type": "Keyword",
+        "value": "四川省"
+      }
+    },
+    {
+      "from": "r1",
+      "to": "k3",
+      "operation": {
+        "type": "Keyword",
+        "value": "门店"
+      }
+    },
+    {
+      "from": "r1",
+      "to": "k4",
+      "operation": {
+        "type": "Keyword",
+        "value": "销售额"
+      }
+    },
+    {
+      "from": "r1",
+      "to": "k5",
+      "operation": {
+        "type": "Keyword",
+        "value": ">500"
+      }
+    },
+    {
+      "from": "r1",
+      "to": "k6",
+      "operation": {
+        "type": "Keyword",
+        "value": "高销量/低销量"
+      }
+    },
+    {
+      "from": "r1",
+      "to": "k7",
+      "operation": {
+        "type": "Keyword",
+        "value": "客户表"
+      }
+    },
+    {
+      "from": "r1",
+      "to": "k8",
+      "operation": {
+        "type": "Keyword",
+        "value": "平均销售额"
+      }
+    },
+    {
+      "from": "r1",
+      "to": "k9",
+      "operation": {
+        "type": "Keyword",
+        "value": "订单数量"
+      }
+    },
+    {
+      "from": "r1",
+      "to": "k10",
+      "operation": {
+        "type": "Keyword",
+        "value": "前5"
+      }
+    },
+    {
+      "from": "r1",
+      "to": "k11",
+      "operation": {
+        "type": "Keyword",
+        "value": "排名"
+      }
+    },
+    {
+      "from": "a1",
+      "to": "step1",
+      "operation": {
+        "type": "Select",
+        "table": "sales_table"
+      }
+    },
+    {
+      "from": "step1",
+      "to": "step2",
+      "operation": {
+        "type": "Filter",
+        "condition": "province='四川省' AND year=2022"
+      }
+    },
+    {
+      "from": "step2",
+      "to": "step3",
+      "operation": {
+        "type": "Select",
+        "columns": [
+          "store",
+          "sales",
+          "order_id"
+        ]
+      }
+    },
+    {
+      "from": "step3",
+      "to": "step4",
+      "operation": {
+        "type": "Filter",
+        "condition": "sales > 500"
+      }
+    },
+    {
+      "from": "step4",
+      "to": "step5",
+      "operation": {
+        "type": "Transform",
+        "rule": "CASE WHEN sales>1000 THEN '高销量' ELSE '低销量'"
+      }
+    },
+    {
+      "from": "step5",
+      "to": "step6",
+      "operation": {
+        "type": "Join",
+        "table": "customer_orders",
+        "on": "order_id"
+      }
+    },
+    {
+      "from": "step6",
+      "to": "step7",
+      "operation": {
+        "type": "GroupBy",
+        "columns": [
+          "store",
+          "sales_level"
+        ],
+        "aggregates": [
+          "AVG(sales)",
+          "COUNT(order_id)"
+        ]
+      }
+    },
+    {
+      "from": "step7",
+      "to": "step8",
+      "operation": {
+        "type": "OrderBy",
+        "column": "avg_sales",
+        "order": "DESC"
+      }
+    },
+    {
+      "from": "step8",
+      "to": "step9",
+      "operation": {
+        "type": "Limit",
+        "value": 5
+      }
+    },
+    {
+      "from": "step9",
+      "to": "step10",
+      "operation": {
+        "type": "Window",
+        "function": "RANK()",
+        "order": "avg_sales DESC"
+      }
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+    "analysis_nodes": [
+      {
+        "id": "u1",
+        "level": "0",
+        "NL": "用户原始查询: 2022年四川省不同门店的销售额",
+        "Data": "user_query",
+        "next_node": ["r1"]
+      },
+      {
+        "id": "r1",
+        "level": "1",
+        "NL": "改写查询: 筛选出日期在2022/01/01-2022/12/31之间属于四川省的销售额之和，并按门店分组",
+        "Data": "rewrite_query",
+        "next_node": ["k1", "k2", "k3", "k4"]
+      },
+      {
+        "id": "k1",
+        "level": "2",
+        "NL": "关键字: 四川省（地理位置维度，限制省份为四川）",
+        "Data": "key_words[0]",
+        "next_node": []
+      },
+      {
+        "id": "k2",
+        "level": "2",
+        "NL": "关键字: 2022年（时间维度，筛选时间范围为2022-01-01到2022-12-31）",
+        "Data": "key_words[1]",
+        "next_node": []
+      },
+      {
+        "id": "k3",
+        "level": "2",
+        "NL": "关键字: 销售额（指标字段，取销售额总和）",
+        "Data": "key_words[2]",
+        "next_node": []
+      },
+      {
+        "id": "k4",
+        "level": "2",
+        "NL": "关键字: 门店（分组维度，按门店聚合）",
+        "Data": "key_words[3]",
+        "next_node": ["a1"]
+      },
+      {
+        "id": "a1",
+        "level": "3",
+        "NL": "分析查询: 查询2022年1月1日至2022年12月31日期间，限定在四川省范围内的销售数据，计算销售额总和，并按照门店进行分组统计",
+        "Data": "analysis_query",
+        "next_node": ["s1"]
+      },
+      {
+        "id": "s1",
+        "level": "4",
+        "NL": "生成 SQL: SELECT store, SUM(sales) as total_sales ...",
+        "Data": "sql_code",
+        "next_node": ["step1"]
+      },
+      {
+        "id": "step1",
+        "level": "5",
+        "NL": "从sales_table表中读取原始数据",
+        "Data": "dataframe: {date:2022-01-01, province:四川省, store:门店A, sales:1000, ...}",
+        "next_node": ["step2","step3"]
+      },
+      {
+        "id": "step2",
+        "level": "6",
+        "NL": "筛选province为四川省的数据",
+        "Data": "dataframe: {...}",
+        "next_node": ["step4"]
+      },
+      {
+        "id": "step3",
+        "level": "6",
+        "NL": "筛选日期在2022-01-01到2022-12-31的数据",
+        "Data": "dataframe: {...}",
+        "next_node": ["step4"]
+      },
+      {
+        "id": "step4",
+        "level": "7",
+        "NL": "将步骤2和步骤3结果进行合并，得到四川省2022年的销售数据",
+        "Data": "dataframe: {...}",
+        "next_node": ["step5"]
+      },
+      {
+        "id": "step5",
+        "level": "8",
+        "NL": "按store分组并统计sales的总和，得到最终结果",
+        "Data": "dataframe: {...}",
+        "next_node": []
+      }
+    ]
+  }
+  

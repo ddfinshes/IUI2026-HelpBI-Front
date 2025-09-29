@@ -1,0 +1,122 @@
+{
+  "bi_process_tree": {
+    "user_query": {
+      "raw_text": "计算2022年四川省所有门店的全年总销售额，并按门店名称分组展示结果",
+      "timestamp": "2025-09-16T18:30:00Z"
+    },
+    "query_decomposition": {
+      "description": "将业务目标拆解为指标、维度与过滤条件。",
+      "metrics": [
+        {
+          "name": "销售额",
+          "technical_name": "sales",
+          "aggregation": "SUM"
+        }
+      ],
+      "dimensions": [
+        {
+          "name": "门店",
+          "technical_name": "store_name"
+        }
+      ],
+      "filters": [
+        {
+          "field_name": "日期",
+          "technical_name": "date",
+          "operator": "BETWEEN",
+          "value": ["2022-01-01", "2022-12-31"]
+        },
+        {
+          "field_name": "省份",
+          "technical_name": "province",
+          "operator": "EQUAL",
+          "value": "四川省"
+        }
+      ]
+    },
+    "execution_plan": {
+      "description": "按时间线执行：先拆解，再子表读取与过滤，随后关联与汇总，最终产出结果。",
+      "steps": [
+        {
+          "step": 1,
+          "type": "data_retrieval",
+          "description": "从 'store_information' 表获取门店与省份。",
+          "source_table": "store_information",
+          "columns": ["store_name", "province"],
+          "output_name": "all_stores_with_province"
+        },
+        {
+          "step": 2,
+          "type": "filter",
+          "description": "筛选省份为 '四川省' 的门店。",
+          "input_name": "all_stores_with_province",
+          "condition": {
+            "technical_name": "province",
+            "operator": "EQUAL",
+            "value": "四川省"
+          },
+          "output_name": "sichuan_stores"
+        },
+        {
+          "step": 3,
+          "type": "data_retrieval",
+          "description": "从 'reginal_order' 表获取包含日期、销售额与门店名称的销售数据。",
+          "source_table": "reginal_order",
+          "columns": ["date", "sales", "store_name"],
+          "output_name": "all_orders"
+        },
+        {
+          "step": 4,
+          "type": "filter",
+          "description": "从销售数据中筛选 2022-01-01 至 2022-12-31 的记录。",
+          "input_name": "all_orders",
+          "condition": {
+            "technical_name": "date",
+            "operator": "BETWEEN",
+            "value": ["2022-01-01", "2022-12-31"]
+          },
+          "output_name": "orders_in_2022"
+        },
+        {
+          "step": 5,
+          "type": "join",
+          "description": "将 2022 年销售数据与四川省门店列表按 'store_name' 进行关联。",
+          "left_input": "orders_in_2022",
+          "right_input": "sichuan_stores",
+          "join_key": "store_name",
+          "output_name": "filtered_sales"
+        },
+        {
+          "step": 6,
+          "type": "aggregate",
+          "description": "按 'store_name' 分组，计算 'sales' 的总和为 'sum_sales'。",
+          "input_name": "filtered_sales",
+          "dimensions_to_group_by": ["store_name"],
+          "aggregations_to_calculate": [
+            {
+              "field": "sales",
+              "function": "SUM",
+              "output_field_name": "sum_sales"
+            }
+          ],
+          "output_name": "final_aggregated_data"
+        }
+      ]
+    },
+    "final_result": {
+      "status": "success",
+      "data": [
+        { "store_name": "成都IFS店", "sum_sales": 1250000 },
+        { "store_name": "绵阳万达店", "sum_sales": 890000 },
+        { "store_name": "乐山世豪广场店", "sum_sales": 760000 }
+      ],
+      "natural_language_summary": "已计算 2022 年四川省各门店的总销售额，并按门店展示。成都IFS店最高为 125 万元。",
+      "visualization_suggestion": {
+        "type": "bar_chart",
+        "title": "2022年四川省各门店销售额",
+        "x_axis": { "field": "store_name", "label": "门店名称" },
+        "y_axis": { "field": "sum_sales", "label": "总销售额（万元）" }
+      }
+    }
+  }
+}

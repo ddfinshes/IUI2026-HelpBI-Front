@@ -1,0 +1,137 @@
+{
+  "analysis_nodes": [
+    {
+      "id": "u1",
+      "level": "0",
+      "NL": "用户原始查询: 2022年四川省不同门店的销售额",
+      "Operation": "Input",
+      "Table": {
+        "desc": "",
+        "data": []
+      },
+      "next_node": ["r1"]
+    },
+    {
+      "id": "r1",
+      "level": "1",
+      "NL": "改写查询: 筛选出日期在2022/01/01-2022/12/31之间属于四川省的销售额之和，并按门店分组",
+      "Operation": "Rewrite",
+      "Table": {
+        "desc": "",
+        "data": []
+      },
+      "next_node": ["k1", "k2", "k3", "k4"]
+    },
+    {
+      "id": "k1",
+      "level": "2",
+      "NL": "关键字: 四川省（地理位置维度，限制省份为四川）",
+      "Data": "",
+      "next_node": []
+    },
+    {
+      "id": "k2",
+      "level": "2",
+      "NL": "关键字: 2022年（时间维度，筛选时间范围为2022-01-01到2022-12-31）",
+      "Data": "",
+      "next_node": []
+    },
+    {
+      "id": "k3",
+      "level": "2",
+      "NL": "关键字: 销售额（指标字段，取销售额总和）",
+      "Data": "",
+      "next_node": []
+    },
+    {
+      "id": "k4",
+      "level": "2",
+      "NL": "关键字: 门店（分组维度，按门店聚合）",
+      "Data": "",
+      "next_node": ["a1"]
+    },
+    {
+      "id": "a1",
+      "level": "3",
+      "NL": "分析查询: 查询2022年1月1日至2022年12月31日期间，限定在四川省范围内的销售数据，计算销售额总和，并按照门店进行分组统计",
+      "Data": "analysis_query",
+      "next_node": ["step1"]
+    },
+    {
+      "id": "step1",
+      "level": "4",
+      "NL": "从 sales_table 表中读取原始数据",
+      "Operation": "Scan",
+      "Table": {
+        "desc": "sales_table 原始数据",
+        "data": [
+          ["date", "province", "store", "sales"],
+          ["2022-01-01", "四川省", "门店A", 1000],
+          ["2022-01-01", "四川省", "门店B", 800],
+          ["2022-01-02", "云南省", "门店C", 1200]
+        ]
+      },
+      "next_node": ["step2", "step3"]
+    },
+    {
+      "id": "step2",
+      "level": "5",
+      "NL": "筛选省份为四川省的数据",
+      "Operation": "Filter",
+      "Table": {
+        "desc": "筛选条件: province = 四川省",
+        "data": [
+          ["date", "province", "store", "sales"],
+          ["2022-01-01", "四川省", "门店A", 1000],
+          ["2022-01-01", "四川省", "门店B", 800]
+        ]
+      },
+      "next_node": ["step4"]
+    },
+    {
+      "id": "step3",
+      "level": "5",
+      "NL": "筛选日期在 2022-01-01 到 2022-12-31 的数据",
+      "Operation": "Filter",
+      "Table": {
+        "desc": "筛选条件: 日期在 2022-01-01 至 2022-12-31",
+        "data": [
+          ["date", "province", "store", "sales"],
+          ["2022-01-01", "四川省", "门店A", 1000],
+          ["2022-01-01", "四川省", "门店B", 800]
+        ]
+      },
+      "next_node": ["step4"]
+    },
+    {
+      "id": "step4",
+      "level": "6",
+      "NL": "将步骤2和步骤3结果合并，得到四川省2022年的销售数据",
+      "Operation": "Merge",
+      "Table": {
+        "desc": "四川省 2022 年的销售数据",
+        "data": [
+          ["date", "province", "store", "sales"],
+          ["2022-01-01", "四川省", "门店A", 1000],
+          ["2022-01-01", "四川省", "门店B", 800]
+        ]
+      },
+      "next_node": ["step5"]
+    },
+    {
+      "id": "step5",
+      "level": "7",
+      "NL": "按 store 分组并统计 sales 的总和，得到最终结果",
+      "Operation": "GroupBy",
+      "Table": {
+        "desc": "分组骨架表: 按门店统计总销售额",
+        "data": [
+          ["store", "total_sales"],
+          ["门店A", 1000],
+          ["门店B", 800]
+        ]
+      },
+      "next_node": []
+    }
+  ]
+}
