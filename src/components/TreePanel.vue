@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, nextTick, onMounted } from 'vue'
 import sample from '../assests/Example.json'
+import { watch } from 'vue'
+import { watchEffect } from 'vue'
 
 const flowchartRef = ref<HTMLElement | null>(null)
 const svgWidth = ref(800)
-const svgHeight = ref(600)
+const svgHeight = ref(1500)
 const links = ref<any[]>([])
 
 const mainline = ref<any[]>([])   // 主线节点
@@ -30,6 +32,13 @@ const isAtomicOp = (type?: string) => {
   return type ? atomicOps.includes(type) : false
 }
 
+const viewModes = ref<Record<string, 'table' | 'chart'>>({})
+sample.nodes.forEach((n: any) => {
+  nodesMap.value[n.id] = n
+  viewModes.value[n.id] = 'table'
+})
+
+
 function loadSample() {
   nodesMap.value = {}
   sample.nodes.forEach((n: any) => {
@@ -50,7 +59,11 @@ function loadSample() {
   keywords.value = sample.nodes.filter((n: any) => n.type === 'Keyword')
 
   nextTick(() => {
-    updateSvgSize()
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        updateSvgSize()
+      })
+    })
   })
 }
 
@@ -157,11 +170,23 @@ function getLabelSize(link: any) {
 }
 
 
+// 监听 viewModes 变化时重新渲染
+watch(viewModes, () => {
+  nextTick(() => {
+    loadSample()
+  })
+}, { deep: true })
+
+// 监听窗口大小时重新渲染
 onMounted(() => {
   window.addEventListener('resize', () => {
-    nextTick(() => updateSvgSize())
+    nextTick(() => {
+      loadSample()
+    })
   })
 })
+
+
 </script>
 
 <template>
@@ -170,7 +195,7 @@ onMounted(() => {
 
     <div ref="flowchartRef" class="flowchart">
       <!-- 连接线 -->
-      <svg class="links" :width="svgWidth" :height="svgHeight">
+      <svg class="links" :width="svgWidth" height=100%>
         <defs>
           <!-- 定义菱形 -->
           <marker
@@ -182,7 +207,7 @@ onMounted(() => {
             orient="auto"
             markerUnits="strokeWidth"
           >
-            <path d="M6,0 L12,6 L6,12 L0,6 Z" fill="#dae8d2"/>
+            <path d="M6,0 L12,6 L6,12 L0,6 Z" fill="#cbdcc1"/>
           </marker>
         </defs>
 
@@ -192,7 +217,7 @@ onMounted(() => {
           v-for="link in links"
           :key="link.from + '-' + link.to"
           :d="getPath(link)"
-          stroke="#dae8d2"
+          stroke="#cbdcc1"
           stroke-opacity="0.6"
           fill="none"
           stroke-width="1.5"
@@ -248,11 +273,59 @@ onMounted(() => {
         <div
           v-for="node in mainline"
           :key="node.id"
-          class="node"
+          :class="['node', isAtomicOp(node.type) ? 'atomic' : 'normal']"
           :ref="el => { if (el) nodeRefs[node.id] = el }"
+          @mouseenter="initViewMode(node.id)"
         >
-          <h3 class="title">{{ node.type }}</h3>
-          <div class="nl">{{ node.NL }}</div>
+          <div class="nl">NL Explaination: {{ node.NL }}</div>
+          <!-- 如果是原子操作节点，展示 Table 或 Chart -->
+          <div v-if="isAtomicOp(node.type) && node.Table" class="data-view">
+            <!-- Table 模式 -->
+            <div class="table-desc">SQL Code Snippet: {{ node.Table.desc }}</div>
+
+            <!-- 切换按钮 -->
+            <div class="view-toggle">
+                <el-segmented
+                  v-model="viewModes[node.id]"
+                  :options="[
+                    { label: 'Table', value: 'table' },
+                    { label: 'Chart', value: 'chart' }
+                  ]"
+                  size="small"
+                />
+            </div>
+            
+            <div v-if="viewModes[node.id] === 'table'" class="data-table">
+
+              <el-table
+                v-if="node.Table.data && node.Table.data.length > 1"
+                :data="node.Table.data.slice(1).map(row => {
+                  return Object.fromEntries(node.Table.data[0].map((col, ci) => [col, row[ci]]))
+                })"
+                border
+                stripe
+                style="width: 100%; margin-top: 8px; font-size: 11px;"
+              >
+                <el-table-column
+                  v-for="(col, ci) in node.Table.data[0]"
+                  :key="ci"
+                  :prop="col"
+                  :label="col"
+                  align="center"
+                  header-align="center"
+                  :min-width="60"
+                  show-overflow-tooltip
+                />
+              </el-table>
+            </div>
+
+            <!-- Chart 模式 -->
+            <div v-else class="data-chart">
+              <div class="chart-placeholder">
+                Placeholder
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -300,13 +373,20 @@ onMounted(() => {
 }
 
 .node {
-  width: 300px;
+  width: 350px;
   padding: 10px;
   border-radius: 10px;
   border: 1px solid #ccc;
-  background: #fefce8;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.node.atomic {
+  background: #e8f1e3;
+}
+
+.node.normal {
+  background: #fefce8;
 }
 
 .keyword-node {
@@ -330,6 +410,17 @@ onMounted(() => {
   font-size: 12px;
   color: #4a5568;
 }
+.table-desc {
+  font-family: 'Fira Code', 'Consolas', 'Courier New', monospace; /* 等宽字体 */
+  font-size: 12px;   /* 稍小一点 */
+  font-weight: 500;  /* 半粗 */
+  color: #4a5568;    /* 深灰色，类似 Tailwind slate-700 */
+  margin-bottom: 6px;
+  white-space: pre-wrap;  /* SQL 片段换行友好 */
+  word-break: break-word;
+}
+
+
 .links {
   position: absolute;
   top: 0;

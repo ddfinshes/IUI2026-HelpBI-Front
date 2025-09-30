@@ -133,34 +133,10 @@
       "Table": {
         "desc": "sales_table",
         "data": [
-          [
-            "date",
-            "province",
-            "store",
-            "order_id",
-            "sales"
-          ],
-          [
-            "2022-01-01",
-            "四川省",
-            "门店A",
-            "o001",
-            1200
-          ],
-          [
-            "2022-01-01",
-            "四川省",
-            "门店B",
-            "o002",
-            600
-          ],
-          [
-            "2022-01-01",
-            "云南省",
-            "门店C",
-            "o003",
-            800
-          ]
+          ["date", "province", "store", "order_id", "sales"],
+          ["2022-01-01", "四川省", "门店A", "o001", 1200],
+          ["2022-01-01", "四川省", "门店B", "o002", 600],
+          ["2022-01-01", "云南省", "门店C", "o003", 800]
         ]
       }
     },
@@ -170,7 +146,11 @@
       "NL": "筛选四川省 2022 年数据",
       "Table": {
         "desc": "WHERE province='四川省' AND YEAR(date)=2022",
-        "data": []
+        "data": [
+          ["date", "province", "store", "order_id", "sales"],
+          ["2022-01-01", "四川省", "门店A", "o001", 1200],
+          ["2022-01-01", "四川省", "门店B", "o002", 600]
+        ]
       }
     },
     {
@@ -179,7 +159,11 @@
       "NL": "选择字段: store, sales, order_id",
       "Table": {
         "desc": "SELECT store, sales, order_id",
-        "data": []
+        "data": [
+          ["store", "sales", "order_id"],
+          ["门店A", 1200, "o001"],
+          ["门店B", 600, "o002"]
+        ]
       }
     },
     {
@@ -188,7 +172,11 @@
       "NL": "筛选销售额 > 500",
       "Table": {
         "desc": "WHERE sales > 500",
-        "data": []
+        "data": [
+          ["store", "sales", "order_id"],
+          ["门店A", 1200, "o001"],
+          ["门店B", 600, "o002"]
+        ]
       }
     },
     {
@@ -197,7 +185,11 @@
       "NL": "转换: 将销售额转为高销量/低销量",
       "Table": {
         "desc": "CASE WHEN sales>1000 THEN '高销量' ELSE '低销量'",
-        "data": []
+        "data": [
+          ["store", "sales", "order_id", "sales_level"],
+          ["门店A", 1200, "o001", "高销量"],
+          ["门店B", 600, "o002", "低销量"]
+        ]
       }
     },
     {
@@ -206,7 +198,11 @@
       "NL": "连接 sales_table 和 customer_orders",
       "Table": {
         "desc": "INNER JOIN ON order_id",
-        "data": []
+        "data": [
+          ["store", "sales", "order_id", "sales_level", "customer_id"],
+          ["门店A", 1200, "o001", "高销量", "c101"],
+          ["门店B", 600, "o002", "低销量", "c102"]
+        ]
       }
     },
     {
@@ -215,7 +211,11 @@
       "NL": "按 store, sales_level 分组，统计 avg_sales 和 order_count",
       "Table": {
         "desc": "GROUP BY store, sales_level",
-        "data": []
+        "data": [
+          ["store", "sales_level", "avg_sales", "order_count"],
+          ["门店A", "高销量", 1200, 1],
+          ["门店B", "低销量", 600, 1]
+        ]
       }
     },
     {
@@ -224,7 +224,11 @@
       "NL": "按 avg_sales 降序排序",
       "Table": {
         "desc": "ORDER BY avg_sales DESC",
-        "data": []
+        "data": [
+          ["store", "sales_level", "avg_sales", "order_count"],
+          ["门店A", "高销量", 1200, 1],
+          ["门店B", "低销量", 600, 1]
+        ]
       }
     },
     {
@@ -233,7 +237,11 @@
       "NL": "限制取前5个门店",
       "Table": {
         "desc": "LIMIT 5",
-        "data": []
+        "data": [
+          ["store", "sales_level", "avg_sales", "order_count"],
+          ["门店A", "高销量", 1200, 1],
+          ["门店B", "低销量", 600, 1]
+        ]
       }
     },
     {
@@ -242,7 +250,11 @@
       "NL": "窗口计算: 按 avg_sales 排名",
       "Table": {
         "desc": "RANK() OVER (ORDER BY avg_sales DESC)",
-        "data": []
+        "data": [
+          ["store", "sales_level", "avg_sales", "order_count", "rank"],
+          ["门店A", "高销量", 1200, 1, 1],
+          ["门店B", "低销量", 600, 1, 2]
+        ]
       }
     }
   ],
