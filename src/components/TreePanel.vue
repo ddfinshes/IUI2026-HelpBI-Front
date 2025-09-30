@@ -207,19 +207,37 @@ onMounted(() => {
           :transform="`translate(${getLabelPos(link).x}, ${getLabelPos(link).y})`"
         >
           <!-- 背景圆角矩形 -->
-          <rect :x="-(getLabelSize(link).width / 2)" y="-14" :width="getLabelSize(link).width" height="28" rx="14" ry="14"
-                fill="white" stroke="black" stroke-width="1" />
+          <rect
+            :x="-(getLabelSize(link).width / 2)"
+            y="-14"
+            :width="getLabelSize(link).width"
+            height="28"
+            rx="14"
+            ry="14"
+            fill="white"
+            stroke="black"
+            stroke-width="1"
+          />
 
           <!-- 图标 -->
           <image
             v-if="isAtomicOp(link.operation?.type)"
             :href="`/icons/${link.operation.type}.png`"
-            :x="-(getLabelSize(link).width / 2 - 5)" y="-10"
-            width="16" height="16"
+            :x="-(getLabelSize(link).width / 2) + 6"
+            y="-10"
+            width="16"
+            height="16"
           />
 
           <!-- 文字 -->
-          <text :x="-(getLabelSize(link).width / 2 - 25)" y="4" font-size="12" font-style="italic" fill="black">
+          <text
+            x="4"         
+            y="4"
+            font-size="12"
+            font-style="italic"
+            fill="black"
+            text-anchor="middle"
+          >
             {{ link.operation?.type }}
           </text>
         </g>
