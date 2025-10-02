@@ -49,6 +49,11 @@ function normalizeOperation(op: any) {
   }
 }
 
+function getOperation(link: any) {
+  const fromNode = nodesMap.value[link.from]
+  return fromNode?.operation ? normalizeOperation(fromNode.operation) : null
+}
+
 function loadSample() {
   nodesMap.value = {}
   sample.nodes.forEach((n: any) => {
@@ -259,8 +264,8 @@ onMounted(() => {
 
           <!-- 图标 -->
           <image
-            v-if="isAtomicOp(getNode(link)?.operation.type)"
-            :href="`/icons/${(getNode(link)?.operation.type || '').replace(/[\/\\]/g, '_')}.png`"
+            v-if="isAtomicOp(getOperation(link)?.type)"
+            :href="`/icons/${(getOperation(link)?.type || '').replace(/[\/\\]/g, '_')}.png`"
             :x="-(getLabelSize(link).width / 2) + 6"
             y="-10"
             width="16"
@@ -276,7 +281,7 @@ onMounted(() => {
             fill="black"
             text-anchor="middle"
           >
-            {{ links[link.from].type || "" }}
+            {{ getOperation(link)?.type || "" }}
           </text>
         </g>
       </svg>
