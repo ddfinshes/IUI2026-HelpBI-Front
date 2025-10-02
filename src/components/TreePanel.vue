@@ -3,6 +3,7 @@ import { ref, nextTick, onMounted } from 'vue'
 import sample from '../assests/Example.json'
 import { watch } from 'vue'
 import { watchEffect } from 'vue'
+import ChartViewer from './ChartViewer.vue'
 
 const flowchartRef = ref<HTMLElement | null>(null)
 const svgWidth = ref(800)
@@ -314,7 +315,6 @@ onMounted(() => {
             </div>
             
             <div v-if="viewModes[node.id] === 'table'" class="data-table">
-
               <el-table
                 v-if="node.Table.data && node.Table.data.length > 1"
                 :data="node.Table.data.slice(1).map(row => {
@@ -322,7 +322,7 @@ onMounted(() => {
                 })"
                 border
                 stripe
-                style="width: 100%; margin-top: 8px; font-size: 11px;"
+                style="width: 100%; margin-top: 2px; font-size: 11px;"
               >
                 <el-table-column
                   v-for="(col, ci) in node.Table.data[0]"
@@ -339,8 +339,13 @@ onMounted(() => {
 
             <!-- Chart 模式 -->
             <div v-else class="data-chart">
-              <div class="chart-placeholder">
-                Placeholder
+              <ChartViewer 
+                v-if="node.Table.data && node.Table.data.length > 1"
+                :data="node.Table.data"
+                :title="`${node.type} - ${node.id}`"
+              />
+              <div v-else class="no-data">
+                暂无数据可展示
               </div>
             </div>
           </div>
@@ -433,9 +438,30 @@ onMounted(() => {
   font-size: 12px;   /* 稍小一点 */
   font-weight: 500;  /* 半粗 */
   color: #4a5568;    /* 深灰色，类似 Tailwind slate-700 */
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   white-space: pre-wrap;  /* SQL 片段换行友好 */
   word-break: break-word;
+}
+
+.data-view {
+  margin-top: 6px;
+}
+
+.view-toggle {
+  margin-bottom: 6px;
+}
+
+.data-chart {
+  margin-top: 4px;
+}
+
+.no-data {
+  text-align: center;
+  color: #909399;
+  font-style: italic;
+  padding: 20px;
+  background: #f5f7fa;
+  border-radius: 6px;
 }
 
 
