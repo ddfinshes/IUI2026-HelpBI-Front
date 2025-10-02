@@ -13,6 +13,8 @@ const mainline = ref<any[]>([])   // 主线节点
 const keywords = ref<any[]>([])   // 关键词节点
 const nodesMap = ref<Record<string, any>>({})
 const nodeRefs: Record<string, HTMLElement> = {}
+const hoveredLink = ref<{ from: string, to: string, condition: string } | null>(null)
+
 
 // 定义一个原子操作类型列表
 const atomicOps = [
@@ -20,8 +22,7 @@ const atomicOps = [
   'Select',
   'GroupBy',
   'Aggregate',
-  'OrderBy',
-  'Limit',
+  'Order/Limit',
   'Join',
   'Transform',
   'Window'
@@ -38,6 +39,15 @@ sample.nodes.forEach((n: any) => {
   viewModes.value[n.id] = 'table'
 })
 
+function normalizeOperation(op: any) { 
+  if (!op) return { type: '', condition: '' }
+  const { type, condition } = op
+
+  return {
+    type: type || '',
+    condition: condition || ''
+  }
+}
 
 function loadSample() {
   nodesMap.value = {}
@@ -49,13 +59,9 @@ function loadSample() {
   links.value = sample.edges.map((e: any) => ({
     from: e.from,
     to: e.to,
-    operation: e.operation
   }))
 
-  // 主线：除了 keyword 节点
   mainline.value = sample.nodes.filter((n: any) => n.type !== 'Keyword')
-
-  // keywords
   keywords.value = sample.nodes.filter((n: any) => n.type === 'Keyword')
 
   nextTick(() => {
@@ -65,6 +71,11 @@ function loadSample() {
       })
     })
   })
+}
+
+function getNode(link: any) {
+  const fromNode = nodesMap.value[link.from]
+  return fromNode ? fromNode : null
 }
 
 function updateSvgSize() {
@@ -162,7 +173,8 @@ function getLabelPos(link: { from: string, to: string }) {
 }
 
 function getLabelSize(link: any) {
-  const text = link.operation?.type || ""
+  const op = getOperation(link)
+  const text = op?.type || ""
   const textWidth = text.length * 7 // 每字符大约7px
   const iconWidth = isAtomicOp(text) ? 20 : 0
   const padding = 20
@@ -242,12 +254,13 @@ onMounted(() => {
             fill="white"
             stroke="black"
             stroke-width="1"
+            
           />
 
           <!-- 图标 -->
           <image
-            v-if="isAtomicOp(link.operation?.type)"
-            :href="`/icons/${link.operation.type}.png`"
+            v-if="isAtomicOp(getNode(link)?.operation.type)"
+            :href="`/icons/${(getNode(link)?.operation.type || '').replace(/[\/\\]/g, '_')}.png`"
             :x="-(getLabelSize(link).width / 2) + 6"
             y="-10"
             width="16"
@@ -263,7 +276,7 @@ onMounted(() => {
             fill="black"
             text-anchor="middle"
           >
-            {{ link.operation?.type }}
+            {{ links[link.from].type || "" }}
           </text>
         </g>
       </svg>

@@ -130,13 +130,41 @@
       "id": "step1",
       "type": "Select",
       "NL": "读取 sales_table 原始数据",
+      "operation": {
+        "type": "Filter",
+        "condition": "province='四川省' AND year=2022"
+      },
       "Table": {
         "desc": "sales_table",
         "data": [
-          ["date", "province", "store", "order_id", "sales"],
-          ["2022-01-01", "四川省", "门店A", "o001", 1200],
-          ["2022-01-01", "四川省", "门店B", "o002", 600],
-          ["2022-01-01", "云南省", "门店C", "o003", 800]
+          [
+            "date",
+            "province",
+            "store",
+            "order_id",
+            "sales"
+          ],
+          [
+            "2022-01-01",
+            "四川省",
+            "门店A",
+            "o001",
+            1200
+          ],
+          [
+            "2022-01-01",
+            "四川省",
+            "门店B",
+            "o002",
+            600
+          ],
+          [
+            "2022-01-01",
+            "云南省",
+            "门店C",
+            "o003",
+            800
+          ]
         ]
       }
     },
@@ -144,12 +172,34 @@
       "id": "step2",
       "type": "Filter",
       "NL": "筛选四川省 2022 年数据",
+      "operation": {
+        "type": "Select",
+        "condition": "columns: store, sales, order_id"
+      },
       "Table": {
         "desc": "WHERE province='四川省' AND YEAR(date)=2022",
         "data": [
-          ["date", "province", "store", "order_id", "sales"],
-          ["2022-01-01", "四川省", "门店A", "o001", 1200],
-          ["2022-01-01", "四川省", "门店B", "o002", 600]
+          [
+            "date",
+            "province",
+            "store",
+            "order_id",
+            "sales"
+          ],
+          [
+            "2022-01-01",
+            "四川省",
+            "门店A",
+            "o001",
+            1200
+          ],
+          [
+            "2022-01-01",
+            "四川省",
+            "门店B",
+            "o002",
+            600
+          ]
         ]
       }
     },
@@ -157,12 +207,28 @@
       "id": "step3",
       "type": "Select",
       "NL": "选择字段: store, sales, order_id",
+      "operation": {
+        "type": "Filter",
+        "condition": "sales > 500"
+      },
       "Table": {
         "desc": "SELECT store, sales, order_id",
         "data": [
-          ["store", "sales", "order_id"],
-          ["门店A", 1200, "o001"],
-          ["门店B", 600, "o002"]
+          [
+            "store",
+            "sales",
+            "order_id"
+          ],
+          [
+            "门店A",
+            1200,
+            "o001"
+          ],
+          [
+            "门店B",
+            600,
+            "o002"
+          ]
         ]
       }
     },
@@ -170,12 +236,28 @@
       "id": "step4",
       "type": "Filter",
       "NL": "筛选销售额 > 500",
+      "operation": {
+        "type": "Transform",
+        "condition": "CASE WHEN sales>1000 THEN '高销量' ELSE '低销量'"
+      },
       "Table": {
         "desc": "WHERE sales > 500",
         "data": [
-          ["store", "sales", "order_id"],
-          ["门店A", 1200, "o001"],
-          ["门店B", 600, "o002"]
+          [
+            "store",
+            "sales",
+            "order_id"
+          ],
+          [
+            "门店A",
+            1200,
+            "o001"
+          ],
+          [
+            "门店B",
+            600,
+            "o002"
+          ]
         ]
       }
     },
@@ -183,12 +265,31 @@
       "id": "step5",
       "type": "Transform",
       "NL": "转换: 将销售额转为高销量/低销量",
+      "operation": {
+        "type": "Join",
+        "condition": "table: customer_orders, on: order_id"
+      },
       "Table": {
         "desc": "CASE WHEN sales>1000 THEN '高销量' ELSE '低销量'",
         "data": [
-          ["store", "sales", "order_id", "sales_level"],
-          ["门店A", 1200, "o001", "高销量"],
-          ["门店B", 600, "o002", "低销量"]
+          [
+            "store",
+            "sales",
+            "order_id",
+            "sales_level"
+          ],
+          [
+            "门店A",
+            1200,
+            "o001",
+            "高销量"
+          ],
+          [
+            "门店B",
+            600,
+            "o002",
+            "低销量"
+          ]
         ]
       }
     },
@@ -196,12 +297,34 @@
       "id": "step6",
       "type": "Join",
       "NL": "连接 sales_table 和 customer_orders",
+      "operation": {
+        "type": "GroupBy",
+        "condition": "cols: store, sales_level; aggs: AVG(sales), COUNT(order_id)"
+      },
       "Table": {
         "desc": "INNER JOIN ON order_id",
         "data": [
-          ["store", "sales", "order_id", "sales_level", "customer_id"],
-          ["门店A", 1200, "o001", "高销量", "c101"],
-          ["门店B", 600, "o002", "低销量", "c102"]
+          [
+            "store",
+            "sales",
+            "order_id",
+            "sales_level",
+            "customer_id"
+          ],
+          [
+            "门店A",
+            1200,
+            "o001",
+            "高销量",
+            "c101"
+          ],
+          [
+            "门店B",
+            600,
+            "o002",
+            "低销量",
+            "c102"
+          ]
         ]
       }
     },
@@ -209,38 +332,95 @@
       "id": "step7",
       "type": "GroupBy",
       "NL": "按 store, sales_level 分组，统计 avg_sales 和 order_count",
+      "operation": {
+        "type": "Order/Limit",
+        "condition": "order by avg_sales DESC"
+      },
       "Table": {
         "desc": "GROUP BY store, sales_level",
         "data": [
-          ["store", "sales_level", "avg_sales", "order_count"],
-          ["门店A", "高销量", 1200, 1],
-          ["门店B", "低销量", 600, 1]
+          [
+            "store",
+            "sales_level",
+            "avg_sales",
+            "order_count"
+          ],
+          [
+            "门店A",
+            "高销量",
+            1200,
+            1
+          ],
+          [
+            "门店B",
+            "低销量",
+            600,
+            1
+          ]
         ]
       }
     },
     {
       "id": "step8",
-      "type": "OrderBy",
+      "type": "Order/Limit",
       "NL": "按 avg_sales 降序排序",
+      "operation": {
+        "type": "Order/Limit",
+        "condition": "limit 5"
+      },
       "Table": {
         "desc": "ORDER BY avg_sales DESC",
         "data": [
-          ["store", "sales_level", "avg_sales", "order_count"],
-          ["门店A", "高销量", 1200, 1],
-          ["门店B", "低销量", 600, 1]
+          [
+            "store",
+            "sales_level",
+            "avg_sales",
+            "order_count"
+          ],
+          [
+            "门店A",
+            "高销量",
+            1200,
+            1
+          ],
+          [
+            "门店B",
+            "低销量",
+            600,
+            1
+          ]
         ]
       }
     },
     {
       "id": "step9",
-      "type": "Limit",
+      "type": "Order/Limit",
       "NL": "限制取前5个门店",
+      "operation": {
+        "type": "Window",
+        "condition": "RANK() over(avg_sales DESC)"
+      },
       "Table": {
         "desc": "LIMIT 5",
         "data": [
-          ["store", "sales_level", "avg_sales", "order_count"],
-          ["门店A", "高销量", 1200, 1],
-          ["门店B", "低销量", 600, 1]
+          [
+            "store",
+            "sales_level",
+            "avg_sales",
+            "order_count"
+          ],
+          [
+            "门店A",
+            "高销量",
+            1200,
+            1
+          ],
+          [
+            "门店B",
+            "低销量",
+            600,
+            1
+          ]
         ]
       }
     },
@@ -251,9 +431,27 @@
       "Table": {
         "desc": "RANK() OVER (ORDER BY avg_sales DESC)",
         "data": [
-          ["store", "sales_level", "avg_sales", "order_count", "rank"],
-          ["门店A", "高销量", 1200, 1, 1],
-          ["门店B", "低销量", 600, 1, 2]
+          [
+            "store",
+            "sales_level",
+            "avg_sales",
+            "order_count",
+            "rank"
+          ],
+          [
+            "门店A",
+            "高销量",
+            1200,
+            1,
+            1
+          ],
+          [
+            "门店B",
+            "低销量",
+            600,
+            1,
+            2
+          ]
         ]
       }
     }
@@ -261,199 +459,95 @@
   "edges": [
     {
       "from": "u1",
-      "to": "r1",
-      "operation": {
-        "type": "Rewrite"
-      }
+      "to": "r1"
     },
     {
       "from": "r1",
-      "to": "a1",
-      "operation": {
-        "type": "Rewrite with keyword analysis"
-      }
+      "to": "a1"
     },
     {
       "from": "r1",
-      "to": "k1",
-      "operation": {
-        "type": "Keyword",
-        "value": "2022年"
-      }
+      "to": "k1"
     },
     {
       "from": "r1",
-      "to": "k2",
-      "operation": {
-        "type": "Keyword",
-        "value": "四川省"
-      }
+      "to": "k2"
     },
     {
       "from": "r1",
-      "to": "k3",
-      "operation": {
-        "type": "Keyword",
-        "value": "门店"
-      }
+      "to": "k3"
     },
     {
       "from": "r1",
-      "to": "k4",
-      "operation": {
-        "type": "Keyword",
-        "value": "销售额"
-      }
+      "to": "k4"
     },
     {
       "from": "r1",
-      "to": "k5",
-      "operation": {
-        "type": "Keyword",
-        "value": ">500"
-      }
+      "to": "k5"
     },
     {
       "from": "r1",
-      "to": "k6",
-      "operation": {
-        "type": "Keyword",
-        "value": "高销量/低销量"
-      }
+      "to": "k6"
     },
     {
       "from": "r1",
-      "to": "k7",
-      "operation": {
-        "type": "Keyword",
-        "value": "客户表"
-      }
+      "to": "k7"
     },
     {
       "from": "r1",
-      "to": "k8",
-      "operation": {
-        "type": "Keyword",
-        "value": "平均销售额"
-      }
+      "to": "k8"
     },
     {
       "from": "r1",
-      "to": "k9",
-      "operation": {
-        "type": "Keyword",
-        "value": "订单数量"
-      }
+      "to": "k9"
     },
     {
       "from": "r1",
-      "to": "k10",
-      "operation": {
-        "type": "Keyword",
-        "value": "前5"
-      }
+      "to": "k10"
     },
     {
       "from": "r1",
-      "to": "k11",
-      "operation": {
-        "type": "Keyword",
-        "value": "排名"
-      }
+      "to": "k11"
     },
     {
       "from": "a1",
-      "to": "step1",
-      "operation": {
-        "type": "Select",
-        "table": "sales_table"
-      }
+      "to": "step1"
     },
     {
       "from": "step1",
-      "to": "step2",
-      "operation": {
-        "type": "Filter",
-        "condition": "province='四川省' AND year=2022"
-      }
+      "to": "step2"
     },
     {
       "from": "step2",
-      "to": "step3",
-      "operation": {
-        "type": "Select",
-        "columns": [
-          "store",
-          "sales",
-          "order_id"
-        ]
-      }
+      "to": "step3"
     },
     {
       "from": "step3",
-      "to": "step4",
-      "operation": {
-        "type": "Filter",
-        "condition": "sales > 500"
-      }
+      "to": "step4"
     },
     {
       "from": "step4",
-      "to": "step5",
-      "operation": {
-        "type": "Transform",
-        "rule": "CASE WHEN sales>1000 THEN '高销量' ELSE '低销量'"
-      }
+      "to": "step5"
     },
     {
       "from": "step5",
-      "to": "step6",
-      "operation": {
-        "type": "Join",
-        "table": "customer_orders",
-        "on": "order_id"
-      }
+      "to": "step6"
     },
     {
       "from": "step6",
-      "to": "step7",
-      "operation": {
-        "type": "GroupBy",
-        "columns": [
-          "store",
-          "sales_level"
-        ],
-        "aggregates": [
-          "AVG(sales)",
-          "COUNT(order_id)"
-        ]
-      }
+      "to": "step7"
     },
     {
       "from": "step7",
-      "to": "step8",
-      "operation": {
-        "type": "OrderBy",
-        "column": "avg_sales",
-        "order": "DESC"
-      }
+      "to": "step8"
     },
     {
       "from": "step8",
-      "to": "step9",
-      "operation": {
-        "type": "Limit",
-        "value": 5
-      }
+      "to": "step9"
     },
     {
       "from": "step9",
-      "to": "step10",
-      "operation": {
-        "type": "Window",
-        "function": "RANK()",
-        "order": "avg_sales DESC"
-      }
+      "to": "step10"
     }
   ]
 }
