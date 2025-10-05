@@ -51,8 +51,8 @@ function normalizeOperation(op: any) {
 }
 
 function getOperation(link: any) {
-  const fromNode = nodesMap.value[link.from]
-  return fromNode?.operation ? normalizeOperation(fromNode.operation) : null
+  const toNode = nodesMap.value[link.to]
+  return toNode?.operation ? normalizeOperation(toNode.operation) : null
 }
 
 function loadSample() {
@@ -294,7 +294,6 @@ onMounted(() => {
           :key="node.id"
           :class="['node', isAtomicOp(node.type) ? 'atomic' : 'normal']"
           :ref="el => { if (el) nodeRefs[node.id] = el }"
-          @mouseenter="initViewMode(node.id)"
         >
           <div class="nl">NL Explaination: {{ node.NL }}</div>
           <!-- 如果是原子操作节点，展示 Table 或 Chart -->

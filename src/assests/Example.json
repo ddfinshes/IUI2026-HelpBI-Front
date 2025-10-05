@@ -4,6 +4,11 @@
       "id": "u1",
       "type": "Initial Query",
       "NL": "用户原始查询: 查询2022年四川省的销售数据，选择门店和销售额字段，只保留销售额大于500的记录，将销售额转为高销量/低销量类别，并与客户表连接，按门店分组统计平均销售额和订单数量，最后取前5个门店并排名。",
+      "operation": {
+        "type": "Input",
+        "condition": [],
+        "activate_edges": []
+      },
       "Table": {
         "desc": "",
         "data": []
@@ -13,6 +18,32 @@
       "id": "r1",
       "type": "Rewrite Query",
       "NL": "改写查询: 在 sales_table 中筛选 2022 年四川省的记录，选择门店和销售额，过滤销售额>500，转换为类别标签，并与 customer_orders 表连接，按门店聚合，计算平均销售额和订单数，按平均销售额排序，取前5并排名。",
+      "operation": {
+        "type": "Rewrite",
+        "condition": [
+          "sales_table",
+          "customer_orders"
+        ],
+        "activate_edges": [
+          "u1"
+        ]
+      },
+      "Table": {
+        "desc": "",
+        "data": []
+      }
+    },
+    {
+      "id": "a1",
+      "type": "Analysis Query",
+      "NL": "分析改写: 在 sales_table 中筛选 2022 年四川省数据，选择字段 store, sales，过滤 sales>500，将销售额转换为类别标签 (高销量/低销量)，与 customer_orders 连接，按 store 分组，计算 AVG(sales), COUNT(order_id)，按 AVG(sales) 排序，取前5，使用 RANK() 排序。",
+      "operation": {
+        "type": "Analysis",
+        "condition": [],
+        "activate_edges": [
+          "r1"
+        ]
+      },
       "Table": {
         "desc": "",
         "data": []
@@ -22,6 +53,13 @@
       "id": "k1",
       "type": "Keyword",
       "NL": "关键词: 时间=2022年",
+      "operation": {
+        "type": "Keyword",
+        "condition": [],
+        "activate_edges": [
+          "a1"
+        ]
+      },
       "Table": {
         "desc": "筛选 year=2022",
         "data": []
@@ -31,6 +69,13 @@
       "id": "k2",
       "type": "Keyword",
       "NL": "关键词: 省份=四川省",
+      "operation": {
+        "type": "Keyword",
+        "condition": [],
+        "activate_edges": [
+          "a1"
+        ]
+      },
       "Table": {
         "desc": "筛选 province='四川省'",
         "data": []
@@ -40,6 +85,13 @@
       "id": "k3",
       "type": "Keyword",
       "NL": "关键词: 门店",
+      "operation": {
+        "type": "Keyword",
+        "condition": [],
+        "activate_edges": [
+          "a1"
+        ]
+      },
       "Table": {
         "desc": "选择 store，用于分组",
         "data": []
@@ -49,6 +101,13 @@
       "id": "k4",
       "type": "Keyword",
       "NL": "关键词: 销售额",
+      "operation": {
+        "type": "Keyword",
+        "condition": [],
+        "activate_edges": [
+          "a1"
+        ]
+      },
       "Table": {
         "desc": "选择 sales，用于聚合计算",
         "data": []
@@ -58,6 +117,13 @@
       "id": "k5",
       "type": "Keyword",
       "NL": "关键词: >500",
+      "operation": {
+        "type": "Keyword",
+        "condition": [],
+        "activate_edges": [
+          "a1"
+        ]
+      },
       "Table": {
         "desc": "筛选 sales > 500",
         "data": []
@@ -67,6 +133,13 @@
       "id": "k6",
       "type": "Keyword",
       "NL": "关键词: 高销量/低销量",
+      "operation": {
+        "type": "Keyword",
+        "condition": [],
+        "activate_edges": [
+          "a1"
+        ]
+      },
       "Table": {
         "desc": "转换 CASE WHEN sales>1000 THEN '高销量' ELSE '低销量'",
         "data": []
@@ -76,6 +149,13 @@
       "id": "k7",
       "type": "Keyword",
       "NL": "关键词: 客户表",
+      "operation": {
+        "type": "Keyword",
+        "condition": [],
+        "activate_edges": [
+          "a1"
+        ]
+      },
       "Table": {
         "desc": "连接 customer_orders",
         "data": []
@@ -85,6 +165,13 @@
       "id": "k8",
       "type": "Keyword",
       "NL": "关键词: 平均销售额",
+      "operation": {
+        "type": "Keyword",
+        "condition": [],
+        "activate_edges": [
+          "a1"
+        ]
+      },
       "Table": {
         "desc": "聚合 AVG(sales)",
         "data": []
@@ -94,6 +181,13 @@
       "id": "k9",
       "type": "Keyword",
       "NL": "关键词: 订单数量",
+      "operation": {
+        "type": "Keyword",
+        "condition": [],
+        "activate_edges": [
+          "a1"
+        ]
+      },
       "Table": {
         "desc": "聚合 COUNT(order_id)",
         "data": []
@@ -103,6 +197,13 @@
       "id": "k10",
       "type": "Keyword",
       "NL": "关键词: 前5",
+      "operation": {
+        "type": "Keyword",
+        "condition": [],
+        "activate_edges": [
+          "a1"
+        ]
+      },
       "Table": {
         "desc": "限制 LIMIT 5",
         "data": []
@@ -112,30 +213,36 @@
       "id": "k11",
       "type": "Keyword",
       "NL": "关键词: 排名",
+      "operation": {
+        "type": "Keyword",
+        "condition": [],
+        "activate_edges": [
+          "a1"
+        ]
+      },
       "Table": {
         "desc": "窗口计算 RANK()",
         "data": []
       }
     },
     {
-      "id": "a1",
-      "type": "Analysis Query",
-      "NL": "分析改写: 在 sales_table 中筛选 2022 年四川省数据，选择字段 store, sales，过滤 sales>500，将销售额转换为类别标签 (高销量/低销量)，与 customer_orders 连接，按 store 分组，计算 AVG(sales), COUNT(order_id)，按 AVG(sales) 排序，取前5，使用 RANK() 排序。",
-      "Table": {
-        "desc": "",
-        "data": []
-      }
-    },
-    {
       "id": "step1",
-      "type": "Select",
-      "NL": "读取 sales_table 原始数据",
+      "type": "Filter",
+      "NL": "筛选：2022 年四川省数据",
       "operation": {
         "type": "Filter",
-        "condition": "province='四川省' AND year=2022"
+        "condition": [
+          "year",
+          "province"
+        ],
+        "activate_edges": [
+          "k1",
+          "k2",
+          "step2"
+        ]
       },
       "Table": {
-        "desc": "sales_table",
+        "desc": "SELECT * FROM sales_table WHERE province='四川省' AND EXTRACT(YEAR FROM date)=2022;",
         "data": [
           [
             "date",
@@ -157,62 +264,64 @@
             "门店B",
             "o002",
             600
-          ],
-          [
-            "2022-01-01",
-            "云南省",
-            "门店C",
-            "o003",
-            800
           ]
         ]
       }
     },
     {
       "id": "step2",
-      "type": "Filter",
-      "NL": "筛选四川省 2022 年数据",
+      "type": "Select",
+      "NL": "选择字段：store, sales, order_id",
       "operation": {
         "type": "Select",
-        "condition": "columns: store, sales, order_id"
+        "condition": [
+          "store",
+          "sales",
+          "order_id"
+        ],
+        "activate_edges": [
+          "k3",
+          "k4",
+          "step3"
+        ]
       },
       "Table": {
-        "desc": "WHERE province='四川省' AND YEAR(date)=2022",
+        "desc": "SELECT store, sales, order_id FROM filtered_sales;",
         "data": [
           [
-            "date",
-            "province",
             "store",
-            "order_id",
-            "sales"
+            "sales",
+            "order_id"
           ],
           [
-            "2022-01-01",
-            "四川省",
             "门店A",
-            "o001",
-            1200
+            1200,
+            "o001"
           ],
           [
-            "2022-01-01",
-            "四川省",
             "门店B",
-            "o002",
-            600
+            600,
+            "o002"
           ]
         ]
       }
     },
     {
       "id": "step3",
-      "type": "Select",
-      "NL": "选择字段: store, sales, order_id",
+      "type": "Filter",
+      "NL": "筛选：sales > 500",
       "operation": {
         "type": "Filter",
-        "condition": "sales > 500"
+        "condition": [
+          "sales"
+        ],
+        "activate_edges": [
+          "k5",
+          "step4"
+        ]
       },
       "Table": {
-        "desc": "SELECT store, sales, order_id",
+        "desc": "SELECT * FROM selected_sales WHERE sales > 500;",
         "data": [
           [
             "store",
@@ -234,43 +343,20 @@
     },
     {
       "id": "step4",
-      "type": "Filter",
-      "NL": "筛选销售额 > 500",
+      "type": "Transform",
+      "NL": "转换销售额为类别：高销量/低销量",
       "operation": {
         "type": "Transform",
-        "condition": "CASE WHEN sales>1000 THEN '高销量' ELSE '低销量'"
-      },
-      "Table": {
-        "desc": "WHERE sales > 500",
-        "data": [
-          [
-            "store",
-            "sales",
-            "order_id"
-          ],
-          [
-            "门店A",
-            1200,
-            "o001"
-          ],
-          [
-            "门店B",
-            600,
-            "o002"
-          ]
+        "condition": [
+          "sales"
+        ],
+        "activate_edges": [
+          "k6",
+          "step5"
         ]
-      }
-    },
-    {
-      "id": "step5",
-      "type": "Transform",
-      "NL": "转换: 将销售额转为高销量/低销量",
-      "operation": {
-        "type": "Join",
-        "condition": "table: customer_orders, on: order_id"
       },
       "Table": {
-        "desc": "CASE WHEN sales>1000 THEN '高销量' ELSE '低销量'",
+        "desc": "SELECT *, CASE WHEN sales>1000 THEN '高销量' ELSE '低销量' END AS sales_level FROM filtered_sales;",
         "data": [
           [
             "store",
@@ -294,15 +380,22 @@
       }
     },
     {
-      "id": "step6",
+      "id": "step5",
       "type": "Join",
-      "NL": "连接 sales_table 和 customer_orders",
+      "NL": "连接 customer_orders 表（按 order_id）",
       "operation": {
-        "type": "GroupBy",
-        "condition": "cols: store, sales_level; aggs: AVG(sales), COUNT(order_id)"
+        "type": "Join",
+        "condition": [
+          "order_id",
+          "customer_id"
+        ],
+        "activate_edges": [
+          "k7",
+          "step6"
+        ]
       },
       "Table": {
-        "desc": "INNER JOIN ON order_id",
+        "desc": "SELECT a.*, b.customer_id FROM transformed_sales a INNER JOIN customer_orders b ON a.order_id=b.order_id;",
         "data": [
           [
             "store",
@@ -329,15 +422,62 @@
       }
     },
     {
-      "id": "step7",
-      "type": "GroupBy",
-      "NL": "按 store, sales_level 分组，统计 avg_sales 和 order_count",
+      "id": "step6",
+      "type": "Aggregate",
+      "NL": "按 store, sales_level 聚合：AVG(sales), COUNT(order_id)",
       "operation": {
-        "type": "Order/Limit",
-        "condition": "order by avg_sales DESC"
+        "type": "Aggregate",
+        "condition": [
+          "store",
+          "sales_level",
+          "sales",
+          "order_id"
+        ],
+        "activate_edges": [
+          "k8",
+          "k9",
+          "step7"
+        ]
       },
       "Table": {
-        "desc": "GROUP BY store, sales_level",
+        "desc": "SELECT store, sales_level, AVG(sales) AS avg_sales, COUNT(order_id) AS order_count FROM joined_sales GROUP BY store, sales_level;",
+        "data": [
+          [
+            "store",
+            "sales_level",
+            "avg_sales",
+            "order_count"
+          ],
+          [
+            "门店A",
+            "高销量",
+            1200,
+            1
+          ],
+          [
+            "门店B",
+            "低销量",
+            600,
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "id": "step7",
+      "type": "Order/Limit",
+      "NL": "按 avg_sales 降序排序",
+      "operation": {
+        "type": "Order/Limit",
+        "condition": [
+          "avg_sales"
+        ],
+        "activate_edges": [
+          "step8"
+        ]
+      },
+      "Table": {
+        "desc": "SELECT * FROM aggregated_sales ORDER BY avg_sales DESC;",
         "data": [
           [
             "store",
@@ -363,13 +503,19 @@
     {
       "id": "step8",
       "type": "Order/Limit",
-      "NL": "按 avg_sales 降序排序",
+      "NL": "取前5个门店",
       "operation": {
         "type": "Order/Limit",
-        "condition": "limit 5"
+        "condition": [
+          "avg_sales"
+        ],
+        "activate_edges": [
+          "k10",
+          "step9"
+        ]
       },
       "Table": {
-        "desc": "ORDER BY avg_sales DESC",
+        "desc": "SELECT * FROM ordered_sales LIMIT 5;",
         "data": [
           [
             "store",
@@ -394,42 +540,19 @@
     },
     {
       "id": "step9",
-      "type": "Order/Limit",
-      "NL": "限制取前5个门店",
+      "type": "Window",
+      "NL": "窗口函数：按 avg_sales 排名",
       "operation": {
         "type": "Window",
-        "condition": "RANK() over(avg_sales DESC)"
+        "condition": [
+          "avg_sales"
+        ],
+        "activate_edges": [
+          "k11"
+        ]
       },
       "Table": {
-        "desc": "LIMIT 5",
-        "data": [
-          [
-            "store",
-            "sales_level",
-            "avg_sales",
-            "order_count"
-          ],
-          [
-            "门店A",
-            "高销量",
-            1200,
-            1
-          ],
-          [
-            "门店B",
-            "低销量",
-            600,
-            1
-          ]
-        ]
-      }
-    },
-    {
-      "id": "step10",
-      "type": "Window",
-      "NL": "窗口计算: 按 avg_sales 排名",
-      "Table": {
-        "desc": "RANK() OVER (ORDER BY avg_sales DESC)",
+        "desc": "SELECT *, RANK() OVER (ORDER BY avg_sales DESC) AS rank FROM limited_sales;",
         "data": [
           [
             "store",
@@ -544,10 +667,6 @@
     {
       "from": "step8",
       "to": "step9"
-    },
-    {
-      "from": "step9",
-      "to": "step10"
     }
   ]
 }

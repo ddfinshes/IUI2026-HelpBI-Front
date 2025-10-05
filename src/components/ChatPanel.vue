@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { biApi } from '../services/api'
 import { useBiStore } from '../store/biStore'
+import axios from 'axios'
 
 type Role = 'user' | 'assistant' | 'system'
 
@@ -15,9 +16,11 @@ const input = ref('')
 const messages = ref<ChatMessage[]>([])
 const store = useBiStore()
 
-function send() {
+async function send() {
   const text = input.value.trim()
   if (!text) return
+
+  // 添加用户消息
   messages.value.push({
     role: 'user',
     content: text,
@@ -25,26 +28,65 @@ function send() {
   })
   input.value = ''
 
-  // 模拟大模型回复，可以替换成真实 API
-  setTimeout(() => {
+  try {
+    // ✅ 调用 Flask 后端接口 /api/query
+    const resp = await axios.post('http://127.0.0.1:8000/api/query', { query: text }, {
+      headers: { 'Content-Type': 'application/json' }
+    })
+
+    // 提取返回结果
+    const leftView = resp.data?.left_view_info
+    const leftToRight = resp.data?.left_to_right_info
+
+    // 保存到全局 Pinia store（如果需要传递给 /api/helpbi）
+    store.setResult(leftToRight)
+
+    // 添加模型回复消息
     messages.value.push({
       role: 'assistant',
-      content: '这是大模型的回复: ' + text,
+      content: `🧠 系统返回的 left_view_info:\n${JSON.stringify(leftView, null, 2)}`,
       timestamp: new Date().toISOString()
     })
-  }, 800)
+  } catch (err: any) {
+    messages.value.push({
+      role: 'assistant',
+      content: `❌ 请求失败: ${err.message}`,
+      timestamp: new Date().toISOString()
+    })
+  }
 }
 
 async function transformToBi() {
-  const resp = await biApi.transform({ conversation: messages.value })
-  store.setResult(resp)
+  try {
+    const resp = await axios.post('http://127.0.0.1:8000/api/helpbi', store.result, {
+      headers: { 'Content-Type': 'application/json' }
+    })
+    store.setBiResult(resp.data)
+    messages.value.push({
+      role: 'assistant',
+      content: `📊 右视图数据:\n${JSON.stringify(resp.data, null, 2)}`,
+      timestamp: new Date().toISOString()
+    })
+  } catch (err: any) {
+    messages.value.push({
+      role: 'assistant',
+      content: `❌ helpbi 请求失败: ${err.message}`,
+      timestamp: new Date().toISOString()
+    })
+  }
 }
 </script>
 
 <template>
   <div class="wrap">
     <div class="toolbar">
-      <span class="arrow" @click="transformToBi">➡️</span>
+      <button 
+        class="transform-btn" 
+        @click="transformToBi" 
+        :disabled="!store.result"
+      >
+        ➡️
+      </button>
     </div>
 
     <div class="msgs">
@@ -160,6 +202,11 @@ button:hover {
 }
 button:active {
   background: #3a8ee6;
+}
+
+button:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
 }
 
 .arrow {

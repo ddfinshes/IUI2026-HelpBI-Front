@@ -1,0 +1,610 @@
+{
+  "nodes": [
+    {
+      "id": "u1",
+      "type": "Input",
+      "NL": "WTD%/%MTD%/%QTD%/%YTD%sales%vs%Target?",
+      "Table": {},
+      "operation": {
+        "type": "Input",
+        "condition": [],
+        "activate_edges": []
+      }
+    },
+    {
+      "id": "r1",
+      "type": "Rewrite",
+      "NL": "Calculate the actual sales and sales targets for WTD, MTD, QTD, and YTD in 2025.",
+      "Table": {},
+      "operation": {
+        "type": "Rewrite",
+        "condition": [
+          "2025",
+          "WTD",
+          "MTD",
+          "QTD",
+          "YTD",
+          "actual sales",
+          "sales target"
+        ],
+        "activate_edges": []
+      }
+    },
+    {
+      "id": "k2",
+      "type": "Keyword",
+      "score": 0.14107340574264526,
+      "keyword": "Week-to-Date (WTD)",
+      "NL": "Week-to-Date (WTD): The date range from the first day (Sunday) of the current week to yesterday",
+      "Table": {},
+      "operation": {
+        "type": "Keyword",
+        "condition": [
+          "Week-to-Date (WTD)"
+        ],
+        "activate_edges": [
+          "edge1",
+          "edge_k_2"
+        ]
+      }
+    },
+    {
+      "id": "k6",
+      "type": "Keyword",
+      "score": 0.05766552686691284,
+      "keyword": "Calendar Year-to-Date (C-YTD)",
+      "NL": "Calendar Year-to-Date (C-YTD): Alias for YTD (From the first day of this year to yesterday)",
+      "Table": {},
+      "operation": {
+        "type": "Keyword",
+        "condition": [
+          "Calendar Year-to-Date (C-YTD)"
+        ],
+        "activate_edges": [
+          "edge1",
+          "edge_k_6"
+        ]
+      }
+    },
+    {
+      "id": "k10",
+      "type": "Keyword",
+      "score": 0.03328949213027954,
+      "keyword": "Fiscal Year 2025 (FY25)",
+      "NL": "Fiscal Year 2025 (FY25): The period from April 1, 2024, to March 31, 2025",
+      "Table": {},
+      "operation": {
+        "type": "Keyword",
+        "condition": [
+          "Fiscal Year 2025 (FY25)"
+        ],
+        "activate_edges": [
+          "edge1",
+          "edge_k_10"
+        ]
+      }
+    },
+    {
+      "id": "k13",
+      "type": "Keyword",
+      "score": 0.028693318367004395,
+      "keyword": "Week ID",
+      "NL": "Week ID: {'description': \"A six-digit identifier in the 'yyyyww' format (e.g., '202505' for the 5th week of 2025)\", 'Rule for Year Assignment': ['If the current date is between April 1st and December 31st, use the current year + 1', 'If the current date is between January 1st and March 31st, use the current year'], 'SQL': 'SELECT week_id FROM chatbi_dim_calendar WHERE date_code = CURRENT_DATE'}",
+      "Table": {},
+      "operation": {
+        "type": "Keyword",
+        "condition": [
+          "Week ID"
+        ],
+        "activate_edges": [
+          "edge1",
+          "edge_k_13"
+        ]
+      }
+    },
+    {
+      "id": "k5",
+      "type": "Keyword",
+      "score": 0.024955272674560547,
+      "keyword": "Year-to-Date (YTD)",
+      "NL": "Year-to-Date (YTD): The date range from the first day of the current calendar year to yesterday",
+      "Table": {},
+      "operation": {
+        "type": "Keyword",
+        "condition": [
+          "Year-to-Date (YTD)"
+        ],
+        "activate_edges": [
+          "edge1",
+          "edge_k_5"
+        ]
+      }
+    },
+    {
+      "id": "a1",
+      "type": "Analysis",
+      "NL": "Calculate the actual sales (amt_notax) and sales targets (amt_notax_target) for the time periods Week-to-Date (WTD), Month-to-Date (MTD), Quarter-to-Date (QTD), and Year-to-Date (YTD) in the year 2025. The analysis should be based on the data in the dm_fact_sales_chatbi table, filtered for the specific date ranges corresponding to each period. The current date is statically set to February 13, 2025, for the calculation.",
+      "Table": {},
+      "operation": {
+        "type": "AnalysisRewrite",
+        "condition": [
+          "2025",
+          "WTD",
+          "MTD",
+          "QTD",
+          "YTD",
+          "actual sales (amt_notax)",
+          "sales target (amt_notax_target)",
+          "February 13, 2025"
+        ],
+        "activate_edges": [
+          "edge1",
+          "edge_k_0",
+          "edge_k_1",
+          "edge_k_2",
+          "edge_k_3",
+          "edge_k_4"
+        ]
+      }
+    },
+    {
+      "id": "s1",
+      "father_id": [],
+      "NL": "从dm_fact_sales_chatbi表中选出2025年2月10日至12日的数据，显示每行的period标记为'WTD'（周至今），以及原始的不含税销售额(amt_notax)和目标销售额(amt_notax_target)。",
+      "sql": "SELECT 'WTD' as period, amt_notax, amt_notax_target FROM dm_fact_sales_chatbi WHERE date_code BETWEEN '2025-02-10' AND '2025-02-12'",
+      "condition": [
+        "period",
+        "amt_notax",
+        "amt_notax_target"
+      ],
+      "type": "Select",
+      "Table": [],
+      "vis_data": {
+        "vis_tag": "bar-chart",
+        "x": [],
+        "y": [],
+        "title": "Actual Sales vs Sales Targets for WTD, MTD, QTD, and YTD in 2025",
+        "x-legend": "Period",
+        "y-legend": "Sales Amount",
+        "tooltip": ""
+      },
+      "operation": {
+        "type": "Select",
+        "condition": [
+          "period",
+          "amt_notax",
+          "amt_notax_target"
+        ],
+        "activate_edges": [
+          "k2",
+          "k6",
+          "k10",
+          "k13",
+          "k5"
+        ]
+      }
+    },
+    {
+      "id": "s2",
+      "father_id": [
+        "s1"
+      ],
+      "NL": "在基础查询上添加了SUM聚合函数，计算选定时间段内的实际销售额总和(amt_notax)和目标销售额总和(amt_notax_target)。",
+      "sql": "SELECT 'WTD' as period, SUM(amt_notax) as actual_sales, SUM(amt_notax_target) as target_sales FROM dm_fact_sales_chatbi WHERE date_code BETWEEN '2025-02-10' AND '2025-02-12'",
+      "condition": [
+        "actual_sales",
+        "target_sales"
+      ],
+      "type": "Aggregate",
+      "Table": [],
+      "vis_data": {
+        "vis_tag": "bar-chart",
+        "x": [],
+        "y": [],
+        "title": "Actual Sales and Sales Targets for WTD, MTD, QTD, and YTD in 2025",
+        "x-legend": "Period",
+        "y-legend": "Amount",
+        "tooltip": ""
+      },
+      "operation": {
+        "type": "Aggregate",
+        "condition": [
+          "actual_sales",
+          "target_sales"
+        ],
+        "activate_edges": [
+          "k2",
+          "k6",
+          "k13",
+          "k5"
+        ]
+      }
+    },
+    {
+      "id": "t1",
+      "father_id": [],
+      "NL": "从dm_fact_sales_chatbi表中选出2025年2月1日至12日的数据，显示每行的period标记为'MTD'（月至今），以及原始的不含税销售额(amt_notax)和目标销售额(amt_notax_target)。",
+      "sql": "SELECT 'MTD' as period, amt_notax, amt_notax_target FROM dm_fact_sales_chatbi WHERE date_code BETWEEN '2025-02-01' AND '2025-02-12'",
+      "condition": [
+        "period",
+        "amt_notax",
+        "amt_notax_target"
+      ],
+      "type": "Select",
+      "Table": [],
+      "vis_data": {
+        "vis_tag": "bar-chart",
+        "x": [],
+        "y": [],
+        "title": "Actual Sales vs Sales Targets for WTD, MTD, QTD, and YTD in 2025",
+        "x-legend": "",
+        "y-legend": "",
+        "tooltip": ""
+      },
+      "operation": {
+        "type": "Select",
+        "condition": [
+          "period",
+          "amt_notax",
+          "amt_notax_target"
+        ],
+        "activate_edges": [
+          "k2",
+          "k6",
+          "k10",
+          "k13",
+          "k5"
+        ]
+      }
+    },
+    {
+      "id": "t2",
+      "father_id": [
+        "t1"
+      ],
+      "NL": "在基础查询上添加了SUM聚合函数，计算选定时间段内的实际销售额总和(amt_notax)和目标销售额总和(amt_notax_target)。",
+      "sql": "SELECT 'MTD' as period, SUM(amt_notax) as actual_sales, SUM(amt_notax_target) as target_sales FROM dm_fact_sales_chatbi WHERE date_code BETWEEN '2025-02-01' AND '2025-02-12'",
+      "condition": [
+        "actual_sales",
+        "target_sales"
+      ],
+      "type": "Aggregate",
+      "Table": [],
+      "vis_data": {
+        "vis_tag": "bar-chart",
+        "x": [],
+        "y": [],
+        "title": "Actual Sales and Sales Targets for WTD, MTD, QTD, and YTD in 2025",
+        "x-legend": "",
+        "y-legend": "",
+        "tooltip": ""
+      },
+      "operation": {
+        "type": "Aggregate",
+        "condition": [
+          "actual_sales",
+          "target_sales"
+        ],
+        "activate_edges": [
+          "k2",
+          "k6",
+          "k13",
+          "k5"
+        ]
+      }
+    },
+    {
+      "id": "q1",
+      "father_id": [],
+      "NL": "从dm_fact_sales_chatbi表中选出2025年1月1日至2月12日的数据，显示每行的period标记为'QTD'（季度至今），以及原始的不含税销售额(amt_notax)和目标销售额(amt_notax_target)。",
+      "sql": "SELECT 'QTD' as period, amt_notax, amt_notax_target FROM dm_fact_sales_chatbi WHERE date_code BETWEEN '2025-01-01' AND '2025-02-12'",
+      "condition": [
+        "period",
+        "amt_notax",
+        "amt_notax_target"
+      ],
+      "type": "Select",
+      "Table": [],
+      "vis_data": {
+        "vis_tag": "bar-chart",
+        "x": [],
+        "y": [],
+        "title": "Sales and Targets for WTD, MTD, QTD, YTD in 2025",
+        "x-legend": "",
+        "y-legend": "",
+        "tooltip": ""
+      },
+      "operation": {
+        "type": "Select",
+        "condition": [
+          "period",
+          "amt_notax",
+          "amt_notax_target"
+        ],
+        "activate_edges": [
+          "k2",
+          "k6",
+          "k10",
+          "k13",
+          "k5"
+        ]
+      }
+    },
+    {
+      "id": "q2",
+      "father_id": [
+        "q1"
+      ],
+      "NL": "在基础查询上添加了SUM聚合函数，计算选定时间段内的实际销售额总和(amt_notax)和目标销售额总和(amt_notax_target)。",
+      "sql": "SELECT 'QTD' as period, SUM(amt_notax) as actual_sales, SUM(amt_notax_target) as target_sales FROM dm_fact_sales_chatbi WHERE date_code BETWEEN '2025-01-01' AND '2025-02-12'",
+      "condition": [
+        "actual_sales",
+        "target_sales"
+      ],
+      "type": "Aggregate",
+      "Table": [],
+      "vis_data": {
+        "vis_tag": "bar-chart",
+        "x": [],
+        "y": [],
+        "title": "Actual Sales and Sales Targets for WTD, MTD, QTD, and YTD in 2025",
+        "x-legend": "",
+        "y-legend": "",
+        "tooltip": ""
+      },
+      "operation": {
+        "type": "Aggregate",
+        "condition": [
+          "actual_sales",
+          "target_sales"
+        ],
+        "activate_edges": [
+          "k2",
+          "k6",
+          "k13",
+          "k5"
+        ]
+      }
+    },
+    {
+      "id": "y1",
+      "father_id": [],
+      "NL": "从dm_fact_sales_chatbi表中选出2025年1月1日至2月12日的数据，显示每行的period标记为'YTD'（年至今），以及原始的不含税销售额(amt_notax)和目标销售额(amt_notax_target)。",
+      "sql": "SELECT 'YTD' as period, amt_notax, amt_notax_target FROM dm_fact_sales_chatbi WHERE date_code BETWEEN '2025-01-01' AND '2025-02-12'",
+      "condition": [
+        "period",
+        "amt_notax",
+        "amt_notax_target"
+      ],
+      "type": "Select",
+      "Table": [],
+      "vis_data": {
+        "vis_tag": "bar-chart",
+        "x": [],
+        "y": [],
+        "title": "Actual Sales and Sales Targets for WTD, MTD, QTD, and YTD in 2025",
+        "x-legend": "",
+        "y-legend": "",
+        "tooltip": ""
+      },
+      "operation": {
+        "type": "Select",
+        "condition": [
+          "period",
+          "amt_notax",
+          "amt_notax_target"
+        ],
+        "activate_edges": [
+          "k2",
+          "k6",
+          "k10",
+          "k13",
+          "k5"
+        ]
+      }
+    },
+    {
+      "id": "y2",
+      "father_id": [
+        "y1"
+      ],
+      "NL": "在基础查询上添加了SUM聚合函数，计算选定时间段内的实际销售额总和(amt_notax)和目标销售额总和(amt_notax_target)。",
+      "sql": "SELECT 'YTD' as period, SUM(amt_notax) as actual_sales, SUM(amt_notax_target) as target_sales FROM dm_fact_sales_chatbi WHERE date_code BETWEEN '2025-01-01' AND '2025-02-12'",
+      "condition": [
+        "actual_sales",
+        "target_sales"
+      ],
+      "type": "Aggregate",
+      "Table": [],
+      "vis_data": {
+        "vis_tag": "bar-chart",
+        "x": [],
+        "y": [],
+        "title": "Actual Sales and Sales Targets for WTD, MTD, QTD, and YTD in 2025",
+        "x-legend": "",
+        "y-legend": "",
+        "tooltip": ""
+      },
+      "operation": {
+        "type": "Aggregate",
+        "condition": [
+          "actual_sales",
+          "target_sales"
+        ],
+        "activate_edges": [
+          "k2",
+          "k6",
+          "k13",
+          "k5"
+        ]
+      }
+    },
+    {
+      "id": "u1",
+      "father_id": [
+        "s2",
+        "t2",
+        "q2",
+        "y2"
+      ],
+      "NL": "将WTD、MTD、QTD和YTD四个时间段的聚合结果通过UNION ALL合并为一个结果集，用于最终展示不同时间范围的实际销售额和目标销售额。",
+      "sql": "SELECT 'WTD' AS period, SUM(amt_notax) AS actual_sales, SUM(amt_notax_target) AS target_sales FROM dm_fact_sales_chatbi WHERE date_code BETWEEN '2025-02-10' AND '2025-02-12' UNION ALL SELECT 'MTD' AS period, SUM(amt_notax) AS actual_sales, SUM(amt_notax_target) AS target_sales FROM dm_fact_sales_chatbi WHERE date_code BETWEEN '2025-02-01' AND '2025-02-12' UNION ALL SELECT 'QTD' AS period, SUM(amt_notax) AS actual_sales, SUM(amt_notax_target) AS target_sales FROM dm_fact_sales_chatbi WHERE date_code BETWEEN '2025-01-01' AND '2025-02-12' UNION ALL SELECT 'YTD' AS period, SUM(amt_notax) AS actual_sales, SUM(amt_notax_target) AS target_sales FROM dm_fact_sales_chatbi WHERE date_code BETWEEN '2025-01-01' AND '2025-02-12'",
+      "condition": [
+        "period",
+        "actual_sales",
+        "target_sales"
+      ],
+      "type": "Join",
+      "Table": [],
+      "vis_data": {
+        "vis_tag": "bar-chart",
+        "x": [],
+        "y": [],
+        "title": "Actual Sales and Sales Targets for WTD, MTD, QTD, and YTD in 2025",
+        "x-legend": "",
+        "y-legend": "",
+        "tooltip": ""
+      },
+      "operation": {
+        "type": "Join",
+        "condition": [
+          "period",
+          "actual_sales",
+          "target_sales"
+        ],
+        "activate_edges": [
+          "k2",
+          "k6",
+          "k10",
+          "k13",
+          "k5"
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "edge1",
+      "from": "u1",
+      "to": "r1"
+    },
+    [
+      {
+        "edge_id": "edge_r_0",
+        "from": "r1",
+        "to": "k0"
+      }
+    ],
+    [
+      {
+        "edge_id": "edge_r_1",
+        "from": "r1",
+        "to": "k1"
+      }
+    ],
+    [
+      {
+        "edge_id": "edge_r_2",
+        "from": "r1",
+        "to": "k2"
+      }
+    ],
+    [
+      {
+        "edge_id": "edge_r_3",
+        "from": "r1",
+        "to": "k3"
+      }
+    ],
+    [
+      {
+        "edge_id": "edge_r_4",
+        "from": "r1",
+        "to": "k4"
+      }
+    ],
+    {
+      "edge_id": "edge_k_0",
+      "from": "k0",
+      "to": "a1"
+    },
+    {
+      "edge_id": "edge_k_1",
+      "from": "k1",
+      "to": "a1"
+    },
+    {
+      "edge_id": "edge_k_2",
+      "from": "k2",
+      "to": "a1"
+    },
+    {
+      "edge_id": "edge_k_3",
+      "from": "k3",
+      "to": "a1"
+    },
+    {
+      "edge_id": "edge_k_4",
+      "from": "k4",
+      "to": "a1"
+    },
+    {
+      "edge_id": "edge_s_0",
+      "from": [],
+      "to": "s1"
+    },
+    {
+      "edge_id": "edge_s_1",
+      "from": [
+        "s1"
+      ],
+      "to": "s2"
+    },
+    {
+      "edge_id": "edge_s_2",
+      "from": [],
+      "to": "t1"
+    },
+    {
+      "edge_id": "edge_s_3",
+      "from": [
+        "t1"
+      ],
+      "to": "t2"
+    },
+    {
+      "edge_id": "edge_s_4",
+      "from": [],
+      "to": "q1"
+    },
+    {
+      "edge_id": "edge_s_5",
+      "from": [
+        "q1"
+      ],
+      "to": "q2"
+    },
+    {
+      "edge_id": "edge_s_6",
+      "from": [],
+      "to": "y1"
+    },
+    {
+      "edge_id": "edge_s_7",
+      "from": [
+        "y1"
+      ],
+      "to": "y2"
+    },
+    {
+      "edge_id": "edge_s_8",
+      "from": [
+        "s2",
+        "t2",
+        "q2",
+        "y2"
+      ],
+      "to": "u1"
+    }
+  ]
+}

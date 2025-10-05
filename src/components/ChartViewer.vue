@@ -372,6 +372,10 @@ watch(() => props.data, () => {
   background: #fff;
   display: flex;
   flex-direction: column;
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
 }
 
 .sidebar-header {
