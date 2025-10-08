@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import { ref, nextTick, onMounted, computed} from 'vue'
-// import sample from '../assests/Example.json'
+import { ref, nextTick, onMounted } from 'vue'
+import sample from '../assests/Example.json'
 import { watch } from 'vue'
 import { watchEffect } from 'vue'
 import ChartViewer from './ChartViewer.vue'
-import { useBiStore } from '../store/biStore'
-
-const store = useBiStore()
 
 const flowchartRef = ref<HTMLElement | null>(null)
 const svgWidth = ref(800)
@@ -18,6 +15,9 @@ const keywords = ref<any[]>([])   // 关键词节点
 const nodesMap = ref<Record<string, any>>({})
 const nodeRefs: Record<string, HTMLElement> = {}
 const hoveredLink = ref<{ from: string, to: string, condition: string } | null>(null)
+const activeEdges = ref<string[]>([])
+const activeNode = ref<any | null>(null)
+
 
 
 // 定义一个原子操作类型列表
@@ -38,13 +38,10 @@ const isAtomicOp = (type?: string) => {
 }
 
 const viewModes = ref<Record<string, 'table' | 'chart'>>({})
-const sample = computed(() => store.state.biResult || { nodes: [], edges: [] })
-
-
-// sample.nodes.forEach((n: any) => {
-//   nodesMap.value[n.id] = n
-//   viewModes.value[n.id] = 'table'
-// })
+sample.nodes.forEach((n: any) => {
+  nodesMap.value[n.id] = n
+  viewModes.value[n.id] = 'table'
+})
 
 function normalizeOperation(op: any) { 
   if (!op) return { type: '', condition: '' }
@@ -57,33 +54,24 @@ function normalizeOperation(op: any) {
 }
 
 function getOperation(link: any) {
-  const toNode = nodesMap.value[link.to]
-  return toNode?.operation ? normalizeOperation(toNode.operation) : null
+  const fromNode = nodesMap.value[link.from]
+  return fromNode?.operation ? normalizeOperation(fromNode.operation) : null
 }
 
 function loadSample() {
-  const data = store.state.biResult
-  if (!data.nodes) return
-
   nodesMap.value = {}
-  viewModes.value = {}
-
-  data.nodes.forEach((n: any) => {
+  sample.nodes.forEach((n: any) => {
     nodesMap.value[n.id] = n
-    viewModes.value[n.id] = 'table'
   })
 
   // edges -> links（包含 operation 信息）
-  links.value = (data.edges || []).map((e: any) => ({
+  links.value = sample.edges.map((e: any) => ({
     from: e.from,
     to: e.to,
   }))
 
-  mainline.value = data.nodes.filter((n: any) => n.type !== 'Keyword')
-  keywords.value = data.nodes.filter((n: any) => n.type === 'Keyword')
-
-  console.log(mainline.value)
-  console.log(keywords.value)
+  mainline.value = sample.nodes.filter((n: any) => n.type !== 'Keyword')
+  keywords.value = sample.nodes.filter((n: any) => n.type === 'Keyword')
 
   nextTick(() => {
     requestAnimationFrame(() => {
@@ -173,6 +161,11 @@ function getNodeAnchor(id: string, position: 'top' | 'bottom' | 'left' | 'right'
 function getLabelPos(link: { from: string, to: string }) {
   const fromEl = nodeRefs[link.from]
   const toEl = nodeRefs[link.to]
+  console.log(link.from)
+  console.log(link.to)
+  console.log(fromEl)
+  console.log(toEl)
+  console.log("AAAAAA")
   if (!fromEl || !toEl) return { x: 0, y: 0 }
 
   const fromRect = fromEl.getBoundingClientRect()
@@ -202,33 +195,97 @@ function getLabelSize(link: any) {
   return { width: textWidth + iconWidth + padding }
 }
 
-
-// 🔹 统一监听逻辑
-function setupWatchers() {
-  // 1️⃣ 监听 store.biResult
-  watch(() => store.state.biResult, (newVal) => {
-    if (newVal) {
-      console.log('📦 store.biResult 已更新:', newVal)
-      console.log('🧩 sample 内容(原始):', JSON.parse(JSON.stringify(sample.value)))
-      loadSample()
-    }
-  }, { deep: true })
-
-
-  // 2️⃣ 监听 viewModes
-  watch(viewModes, (newVal) => {
-    nextTick(() => loadSample())
-  }, { deep: true })
-
-  // 3️⃣ 监听窗口 resize
-  onMounted(() => {
-    window.addEventListener('resize', () => {
-      nextTick(() => loadSample())
-    })
-  })
+function escapeHtml(str: string) {
+  return String(str).replace(/[&<>"']/g, (m) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string,string>)[m]
+  )
+}
+function escapeRegExp(str: string) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-setupWatchers()
+function highlightNL(node: any) {
+  if (node.type === "Keyword"){
+    if (!activeNode.value || activeNode.value.id !== node.id) {
+      return escapeHtml(node.NL || '')
+    }
+  }
+
+  if (!node?.NL) return ''
+  // 原子节点不在 NL 中高亮
+  if (isAtomicOp(node.type)) return escapeHtml(node.NL)
+
+  const conditions = node.operation?.condition
+  if (!conditions) return escapeHtml(node.NL)
+
+  const condList = Array.isArray(conditions) ? conditions : [conditions]
+  let html = escapeHtml(node.NL)
+
+  condList.forEach((cond: any) => {
+    if (!cond || typeof cond !== 'string') return
+    const escCond = escapeRegExp(escapeHtml(cond))
+    const re = new RegExp(`(${escCond})`, 'gi')
+    // 内联样式确保样式生效（不依赖 scoped CSS）
+    html = html.replace(re, `<span class="highlight" style="background:#ffe58f;padding:0 2px;border-radius:3px;">$1</span>`)
+  })
+
+  return html
+}
+
+function highlightCondition(col: string, node: any) {
+  if (!activeNode.value || activeNode.value.id !== node.id) {
+    return escapeHtml(col)
+  }
+
+  const conditions = activeNode.value.operation?.condition
+  if (!conditions) return escapeHtml(col)
+
+  const condList = Array.isArray(conditions) ? conditions : [conditions]
+  let html = escapeHtml(col)
+
+  for (const cond of condList) {
+    if (!cond || typeof cond !== 'string') continue
+    const escCond = escapeRegExp(cond.trim())
+
+    // 用更精确的边界匹配：单词边界 或 非字母数字下划线边界
+    // 例如匹配 " sales "、"(sales)"、"'sales'"、"`sales`" 等
+    const re = new RegExp(`(?<![\\w])(${escCond})(?![\\w])`, 'g')
+
+    html = html.replace(
+      re,
+      `<span class="highlight" style="background:#ffe58f;padding:0 2px;border-radius:3px;">$1</span>`
+    )
+  }
+
+  return html
+}
+
+
+function handleNodeClick(node: any) {
+  activeNode.value = node
+  if (node.operation && Array.isArray(node.operation.activate_edges)) {
+    activeEdges.value = node.operation.activate_edges
+  } else {
+    activeEdges.value = []
+  }
+}
+
+
+// 监听 viewModes 变化时重新渲染
+watch(viewModes, () => {
+  nextTick(() => {
+    loadSample()
+  })
+}, { deep: true })
+
+// 监听窗口大小时重新渲染
+onMounted(() => {
+  window.addEventListener('resize', () => {
+    nextTick(() => {
+      loadSample()
+    })
+  })
+})
 
 
 </script>
@@ -258,14 +315,15 @@ setupWatchers()
 
         <!-- 贝塞尔曲线 -->
         <path
-          v-for="link in links"
+          v-for="(link, i) in links"
           :key="link.from + '-' + link.to"
           :d="getPath(link)"
-          stroke="#cbdcc1"
-          stroke-opacity="0.6"
+          :stroke="activeEdges.includes(String(i)) ? '#ff7b00' : '#cbdcc1'"
+          :stroke-opacity="activeEdges.includes(String(i)) ? 1 : 0.6"
+          :stroke-width="activeEdges.includes(String(i)) ? 3 : 1.5"
           fill="none"
-          stroke-width="1.5"
           marker-end="url(#diamond)"
+          style="cursor: pointer; transition: all 0.2s;"
         />
 
 
@@ -320,8 +378,10 @@ setupWatchers()
           :key="node.id"
           :class="['node', isAtomicOp(node.type) ? 'atomic' : 'normal']"
           :ref="el => { if (el) nodeRefs[node.id] = el }"
+          
+          @click="handleNodeClick(node)"
         >
-          <div class="nl">NL Explaination: {{ node.NL }}</div>
+          <div class="nl" v-html="highlightNL(node)"></div>
           <!-- 如果是原子操作节点，展示 Table 或 Chart -->
           <div v-if="isAtomicOp(node.type) && node.Table" class="data-view">
             <!-- Table 模式 -->
@@ -350,15 +410,18 @@ setupWatchers()
                 style="width: 100%; margin-top: 2px; font-size: 11px;"
               >
                 <el-table-column
-                  v-for="(col, ci) in node.Table.data[0]"
-                  :key="ci"
-                  :prop="col"
-                  :label="col"
-                  align="center"
-                  header-align="center"
-                  :min-width="60"
-                  show-overflow-tooltip
-                />
+                    v-for="(col, ci) in node.Table.data[0]"
+                    :key="ci"
+                    :prop="col"
+                    align="center"
+                    header-align="center"
+                    :min-width="60"
+                    show-overflow-tooltip
+                >
+                  <template #header>
+                    <span v-html="highlightCondition(col, node)"></span>
+                  </template>
+                </el-table-column>
               </el-table>
             </div>
 
@@ -384,8 +447,9 @@ setupWatchers()
           :key="node.id"
           class="keyword-node"
           :ref="el => { if (el) nodeRefs[node.id] = el }"
+          @click="handleNodeClick(node)"
+          v-html="highlightNL(node)"
         >
-          {{ node.NL }}
         </div>
       </div>
     </div>
@@ -427,6 +491,7 @@ setupWatchers()
   border: 1px solid #ccc;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  cursor: pointer
 }
 
 .node.atomic {
@@ -446,6 +511,7 @@ setupWatchers()
   text-align: center;
   font-size: 13px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  cursor: pointer
 }
 
 .title {
@@ -496,5 +562,12 @@ setupWatchers()
   left: 0;
   pointer-events: none;
   z-index: 0;
+}
+
+.highlight {
+  background-color: #ffe58f;
+  color: #000;
+  border-radius: 3px;
+  padding: 0 2px;
 }
 </style>

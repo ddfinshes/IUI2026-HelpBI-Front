@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ChatPanel from './components/ChatPanel.vue'
-import TreePanel from './components/TreePanel.vue'
+import TreePanel from './components/TreePanel2.vue'
 </script>
 
 <template>
