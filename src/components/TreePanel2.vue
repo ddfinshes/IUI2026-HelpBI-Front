@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, nextTick, onMounted } from 'vue'
+import { ref, nextTick, onMounted, reactive } from 'vue'
 import sample from '../assests/Example.json'
 import { watch } from 'vue'
 import { watchEffect } from 'vue'
@@ -42,6 +42,227 @@ sample.nodes.forEach((n: any) => {
   nodesMap.value[n.id] = n
   viewModes.value[n.id] = 'table'
 })
+
+// 字段编辑状态管理
+const editingField = ref<{ nodeId: string; columnIndex: number } | null>(null)
+const editingValue = ref('')
+const fieldInput = ref<HTMLInputElement>()
+
+// 存储每个节点的字段名称修改
+const fieldNames = reactive<Record<string, string[]>>({})
+
+// 从本地存储加载字段名称
+const loadFieldNames = () => {
+  try {
+    const saved = localStorage.getItem('bi-field-names')
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      Object.assign(fieldNames, parsed)
+    }
+  } catch (error) {
+    console.warn('Failed to load field names from localStorage:', error)
+  }
+}
+
+// 保存字段名称到本地存储
+const saveFieldNamesToStorage = () => {
+  try {
+    localStorage.setItem('bi-field-names', JSON.stringify(fieldNames))
+  } catch (error) {
+    console.warn('Failed to save field names to localStorage:', error)
+  }
+}
+
+// 初始化时加载保存的字段名称
+loadFieldNames()
+
+// 获取字段名称（优先使用修改后的名称）
+const getFieldName = (nodeId: string, columnIndex: number, originalName: string) => {
+  if (fieldNames[nodeId] && fieldNames[nodeId][columnIndex]) {
+    return fieldNames[nodeId][columnIndex]
+  }
+  return originalName
+}
+
+// 开始编辑字段
+const startEditField = (nodeId: string, columnIndex: number, currentName: string) => {
+  console.log('开始编辑字段:', { nodeId, columnIndex, currentName })
+  editingField.value = { nodeId, columnIndex }
+  editingValue.value = currentName
+  
+  // 在下一个tick中聚焦输入框并选中文本
+  setTimeout(() => {
+    if (fieldInput.value) {
+      fieldInput.value.focus()
+      fieldInput.value.select()
+    }
+  }, 0)
+}
+
+// 保存字段名称
+const saveFieldName = () => {
+  if (!editingField.value) return
+  
+  const { nodeId, columnIndex } = editingField.value
+  
+  // 初始化该节点的字段名称数组
+  if (!fieldNames[nodeId]) {
+    fieldNames[nodeId] = []
+  }
+  
+  // 保存修改后的字段名称
+  fieldNames[nodeId][columnIndex] = editingValue.value
+  
+  // 保存到本地存储
+  saveFieldNamesToStorage()
+  
+  // 结束编辑
+  editingField.value = null
+  editingValue.value = ''
+}
+
+// 取消编辑
+const cancelEdit = () => {
+  editingField.value = null
+  editingValue.value = ''
+}
+
+// 检查是否正在编辑某个字段
+const isEditingField = (nodeId: string, columnIndex: number) => {
+  return editingField.value?.nodeId === nodeId && editingField.value?.columnIndex === columnIndex
+}
+
+// 重置字段名称到原始值
+const resetFieldName = (nodeId: string, columnIndex: number, originalName: string) => {
+  if (fieldNames[nodeId] && fieldNames[nodeId][columnIndex]) {
+    delete fieldNames[nodeId][columnIndex]
+    // 如果该节点的所有字段都重置了，删除该节点
+    if (fieldNames[nodeId].length === 0 || fieldNames[nodeId].every(name => !name)) {
+      delete fieldNames[nodeId]
+    }
+    saveFieldNamesToStorage()
+  }
+}
+
+// 检查字段是否被修改过
+const isFieldModified = (nodeId: string, columnIndex: number) => {
+  return fieldNames[nodeId] && fieldNames[nodeId][columnIndex]
+}
+
+// 节点内容编辑状态管理
+const editingNodeContent = ref<{ nodeId: string; field: 'NL' | 'condition' } | null>(null)
+const editingNodeValue = ref('')
+const nodeContentInput = ref<HTMLInputElement | HTMLTextAreaElement>()
+
+// 存储节点内容的修改
+const nodeContents = reactive<Record<string, { NL?: string; condition?: string[] }>>({})
+
+// 从本地存储加载节点内容
+const loadNodeContents = () => {
+  try {
+    const saved = localStorage.getItem('bi-node-contents')
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      Object.assign(nodeContents, parsed)
+    }
+  } catch (error) {
+    console.warn('Failed to load node contents from localStorage:', error)
+  }
+}
+
+// 保存节点内容到本地存储
+const saveNodeContentsToStorage = () => {
+  try {
+    localStorage.setItem('bi-node-contents', JSON.stringify(nodeContents))
+  } catch (error) {
+    console.warn('Failed to save node contents to localStorage:', error)
+  }
+}
+
+// 初始化时加载保存的节点内容
+loadNodeContents()
+
+// 获取节点内容（优先使用修改后的内容）
+const getNodeContent = (nodeId: string, field: 'NL' | 'condition', originalValue: any) => {
+  if (nodeContents[nodeId] && nodeContents[nodeId][field]) {
+    return nodeContents[nodeId][field]
+  }
+  return originalValue
+}
+
+// 开始编辑节点内容
+const startEditNodeContent = (nodeId: string, field: 'NL' | 'condition', currentValue: any) => {
+  console.log('开始编辑节点内容:', { nodeId, field, currentValue })
+  editingNodeContent.value = { nodeId, field }
+  
+  if (field === 'condition' && Array.isArray(currentValue)) {
+    editingNodeValue.value = currentValue.join(', ')
+  } else {
+    editingNodeValue.value = currentValue || ''
+  }
+  
+  // 在下一个tick中聚焦输入框并选中文本
+  setTimeout(() => {
+    if (nodeContentInput.value) {
+      nodeContentInput.value.focus()
+      nodeContentInput.value.select()
+    }
+  }, 0)
+}
+
+// 保存节点内容
+const saveNodeContent = () => {
+  if (!editingNodeContent.value) return
+  
+  const { nodeId, field } = editingNodeContent.value
+  
+  // 初始化该节点的内容对象
+  if (!nodeContents[nodeId]) {
+    nodeContents[nodeId] = {}
+  }
+  
+  // 保存修改后的内容
+  if (field === 'condition') {
+    nodeContents[nodeId][field] = editingNodeValue.value.split(',').map(s => s.trim()).filter(s => s)
+  } else {
+    nodeContents[nodeId][field] = editingNodeValue.value
+  }
+  
+  // 保存到本地存储
+  saveNodeContentsToStorage()
+  
+  // 结束编辑
+  editingNodeContent.value = null
+  editingNodeValue.value = ''
+}
+
+// 取消编辑节点内容
+const cancelEditNodeContent = () => {
+  editingNodeContent.value = null
+  editingNodeValue.value = ''
+}
+
+// 检查是否正在编辑节点内容
+const isEditingNodeContent = (nodeId: string, field: 'NL' | 'condition') => {
+  return editingNodeContent.value?.nodeId === nodeId && editingNodeContent.value?.field === field
+}
+
+// 重置节点内容到原始值
+const resetNodeContent = (nodeId: string, field: 'NL' | 'condition') => {
+  if (nodeContents[nodeId] && nodeContents[nodeId][field]) {
+    delete nodeContents[nodeId][field]
+    // 如果该节点的所有内容都重置了，删除该节点
+    if (Object.keys(nodeContents[nodeId]).length === 0) {
+      delete nodeContents[nodeId]
+    }
+    saveNodeContentsToStorage()
+  }
+}
+
+// 检查节点内容是否被修改过
+const isNodeContentModified = (nodeId: string, field: 'NL' | 'condition') => {
+  return nodeContents[nodeId] && nodeContents[nodeId][field]
+}
 
 function normalizeOperation(op: any) { 
   if (!op) return { type: '', condition: '' }
@@ -381,7 +602,65 @@ onMounted(() => {
           
           @click="handleNodeClick(node)"
         >
-          <div class="nl" v-html="highlightNL(node)"></div>
+          <!-- 可编辑的NL内容 -->
+          <div class="nl-container">
+            <div v-if="isEditingNodeContent(node.id, 'NL')" class="edit-container">
+              <textarea 
+                v-model="editingNodeValue"
+                @keyup.enter="saveNodeContent"
+                @keyup.escape="cancelEditNodeContent"
+                @blur="saveNodeContent"
+                class="node-content-input"
+                ref="nodeContentInput"
+                rows="3"
+              />
+            </div>
+            <div v-else class="nl-display" @click="startEditNodeContent(node.id, 'NL', node.NL)">
+              <div class="nl-text" :class="{ 'modified': isNodeContentModified(node.id, 'NL') }" v-html="highlightNL(node)"></div>
+              <div class="nl-actions">
+                <button 
+                  v-if="isNodeContentModified(node.id, 'NL')"
+                  @click.stop="resetNodeContent(node.id, 'NL')"
+                  class="reset-btn"
+                  title="重置为原始内容"
+                >
+                  ↶
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 分析改写节点的条件编辑 -->
+          <div v-if="node.type === 'Analysis Query' && node.operation?.condition" class="condition-container">
+            <div class="condition-label">条件:</div>
+            <div v-if="isEditingNodeContent(node.id, 'condition')" class="edit-container">
+              <input 
+                v-model="editingNodeValue"
+                @keyup.enter="saveNodeContent"
+                @keyup.escape="cancelEditNodeContent"
+                @blur="saveNodeContent"
+                class="node-content-input"
+                ref="nodeContentInput"
+                placeholder="输入条件，用逗号分隔"
+              />
+            </div>
+            <div v-else class="condition-display" @click="startEditNodeContent(node.id, 'condition', getNodeContent(node.id, 'condition', node.operation.condition))">
+              <div class="condition-text" :class="{ 'modified': isNodeContentModified(node.id, 'condition') }">
+                {{ getNodeContent(node.id, 'condition', node.operation.condition).join(', ') }}
+              </div>
+              <div class="condition-actions">
+                <button 
+                  v-if="isNodeContentModified(node.id, 'condition')"
+                  @click.stop="resetNodeContent(node.id, 'condition')"
+                  class="reset-btn"
+                  title="重置为原始条件"
+                >
+                  ↶
+                </button>
+              </div>
+            </div>
+          </div>
+          
           <!-- 如果是原子操作节点，展示 Table 或 Chart -->
           <div v-if="isAtomicOp(node.type) && node.Table" class="data-view">
             <!-- Table 模式 -->
@@ -419,7 +698,35 @@ onMounted(() => {
                     show-overflow-tooltip
                 >
                   <template #header>
-                    <span v-html="highlightCondition(col, node)"></span>
+                    <div class="editable-header" @click.stop="startEditField(node.id, ci, getFieldName(node.id, ci, col))">
+                      <!-- 编辑模式 -->
+                      <div v-if="isEditingField(node.id, ci)" class="edit-container">
+                        <input 
+                          v-model="editingValue"
+                          @keyup.enter="saveFieldName"
+                          @keyup.escape="cancelEdit"
+                          @blur="saveFieldName"
+                          class="field-input"
+                          ref="fieldInput"
+                        />
+                      </div>
+                      <!-- 显示模式 -->
+                      <div v-else class="field-display">
+                        <div class="field-name" :class="{ 'modified': isFieldModified(node.id, ci) }">
+                          {{ getFieldName(node.id, ci, col) }}
+                        </div>
+                        <div class="field-actions">
+                          <button 
+                            v-if="isFieldModified(node.id, ci)"
+                            @click.stop="resetFieldName(node.id, ci, col)"
+                            class="reset-btn"
+                            title="重置为原始名称"
+                          >
+                            ↶
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </template>
                 </el-table-column>
               </el-table>
@@ -569,5 +876,171 @@ onMounted(() => {
   color: #000;
   border-radius: 3px;
   padding: 0 2px;
+}
+
+/* 可编辑表头样式 */
+.editable-header {
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.2s ease;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.editable-header:hover {
+  background-color: #f0f9ff;
+}
+
+.field-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.field-name {
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.field-name.modified {
+  color: #4299e1;
+  font-weight: 700;
+}
+
+.field-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.edit-hint {
+  font-size: 9px;
+  color: #718096;
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.reset-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 10px;
+  color: #e53e3e;
+  padding: 1px 3px;
+  border-radius: 2px;
+  transition: background-color 0.2s ease;
+}
+
+.reset-btn:hover {
+  background-color: #fed7d7;
+}
+
+.edit-container {
+  width: 100%;
+}
+
+.field-input {
+  width: 100%;
+  border: 2px solid #4299e1;
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 11px;
+  background: white;
+  outline: none;
+}
+
+/* 节点内容编辑样式 */
+.nl-container {
+  margin-bottom: 8px;
+}
+
+.nl-display {
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.2s ease;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.nl-display:hover {
+  background-color: #f0f9ff;
+}
+
+.nl-text {
+  font-size: 12px;
+  color: #4a5568;
+  transition: color 0.2s ease;
+}
+
+.nl-text.modified {
+  color: #4299e1;
+  font-weight: 600;
+}
+
+.nl-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.condition-container {
+  margin-top: 8px;
+  padding: 6px;
+  background: #f8fafc;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+.condition-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 4px;
+}
+
+.condition-display {
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.2s ease;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.condition-display:hover {
+  background-color: #f0f9ff;
+}
+
+.condition-text {
+  font-size: 11px;
+  color: #4a5568;
+  transition: color 0.2s ease;
+  font-family: 'Fira Code', 'Consolas', 'Courier New', monospace;
+}
+
+.condition-text.modified {
+  color: #4299e1;
+  font-weight: 600;
+}
+
+.condition-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.node-content-input {
+  width: 100%;
+  border: 2px solid #4299e1;
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+  background: white;
+  outline: none;
+  font-family: inherit;
+}
+
+.node-content-input[type="text"] {
+  font-family: 'Fira Code', 'Consolas', 'Courier New', monospace;
 }
 </style>
